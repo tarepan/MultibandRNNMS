@@ -1,18 +1,16 @@
 # Robust Universal Neural Vocoding
-
-A PyTorch implementation of [Robust Universal Neural Vocoding](https://arxiv.org/abs/1811.06292).
-Audio samples can be found [here](https://bshall.github.io/UniversalVocoding/).
+A PyTorch implementation of **RNN_MS** in "Jaime, et al. (2018) [Towards achieving robust universal neural vocoding](https://arxiv.org/abs/1811.06292)".
+<!-- Audio samples can be found [here](https://bshall.github.io/UniversalVocoding/). -->
 
 
 ![network](network.png?raw=true "Robust Universal Neural Vocoding")
 
 ## Quick Start
-
 1. Ensure you have Python 3 and PyTorch 1.
 
 2. Clone the repo:
   ```
-  git clone https://github.com/bshall/UniversalVocoding
+  git clone https://github.com/tarepan/UniversalVocoding.git
   cd ./UniversalVocoding
   ```
 3. Install requirements:
@@ -40,11 +38,9 @@ Audio samples can be found [here](https://bshall.github.io/UniversalVocoding/).
   ```
 
 ## Pretrained Models
-
-Pretrained weights for the 9-bit model are available [here](https://github.com/bshall/UniversalVocoding/releases/tag/v0.1).
+Pretrained weights for the 9-bit model are available in [original repository](https://github.com/bshall/UniversalVocoding/releases/tag/v0.1).
 
 ## Notable Differences from the Paper
-
 1. Trained on 16kHz audio from 102 different speakers ([ZeroSpeech 2019: TTS without T](https://zerospeech.com/2019/) English dataset)
 2. The model generates 9-bit mu-law audio (planning on training a 10-bit model soon)
 3. Uses an embedding layer instead of one-hot encoding
@@ -63,6 +59,5 @@ Pretrained weights for the 9-bit model are available [here](https://github.com/b
 - other dataset [issue#2](https://github.com/bshall/UniversalVocoding/issues/2)
   - only ZeroSpeech2019, not yet (seems to be interested in other dataset?)
 
-### Acknowlegements
-
+## Acknowlegements
 - https://github.com/fatchord/WaveRNN

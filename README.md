@@ -6,7 +6,7 @@ A PyTorch implementation of **RNN_MS** in "Jaime, et al. (2018) [Towards achievi
 ![network](network.png?raw=true "Robust Universal Neural Vocoding")
 
 ## Quick Start
-1. Ensure you have Python 3 and PyTorch 1.
+1. Ensure you have PyTorch@>=1.1.
 
 2. Clone the repo:
   ```
@@ -15,7 +15,7 @@ A PyTorch implementation of **RNN_MS** in "Jaime, et al. (2018) [Towards achievi
   ```
 3. Install requirements:
   ```
-  pip install -r requirements.txt
+  pipenv install
   ```
 4. Download and extract ZeroSpeech2019 TTS without the T English dataset:
   ```
@@ -24,17 +24,17 @@ A PyTorch implementation of **RNN_MS** in "Jaime, et al. (2018) [Towards achievi
   ```
 5. Extract Mel spectrograms and preprocess audio:
   ```
-  python preprocess.py
+  pipenv run python preprocess.py
   ```
 
 6. Train the model:
   ```
-  python train.py
+  pipenv run python train.py
   ```
   
 7. Generate:
   ```
-  python generate.py --checkpoint=/path/to/checkpoint.pt --wav-path=/path/to/wav.wav
+  pipenv run python generate.py --checkpoint=/path/to/checkpoint.pt --wav-path=/path/to/wav.wav
   ```
 
 ## Pretrained Models
@@ -61,3 +61,11 @@ Pretrained weights for the 9-bit model are available in [original repository](ht
 
 ## Acknowlegements
 - https://github.com/fatchord/WaveRNN
+
+## Development notes
+### PyTorch version control
+control with pip/pipenv is so hard because installation target differ depending on evironments.  
+windows needs
+```
+pip3 install https://download.pytorch.org/whl/cu90/torch-1.1.0-cp36-cp36m-win_amd64.whl
+```

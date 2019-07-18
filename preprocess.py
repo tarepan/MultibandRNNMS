@@ -81,11 +81,12 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--output", default="data")
     parser.add_argument("--num-workers", type=int, default=cpu_count())
-    parser.add_argument("--language", type=str, default="./english")
-    with open("config.json") as f:
-        params = json.load(f)
+    parser.add_argument("--data-dir", type=str, default="./english")
+    parser.add_argument("--config-path", type=str, default="config.json")
     args = parser.parse_args()
-    wav_dirs = [os.path.join(args.language, "train", "unit"), os.path.join(args.language, "train", "voice")]
+    with open(args.config_path) as f:
+        params = json.load(f)
+    wav_dirs = [os.path.join(args.data_dir, "train", "unit"), os.path.join(args.data_dir, "train", "voice")]
     preprocess(wav_dirs, args.output, args.num_workers, params)
 
 

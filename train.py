@@ -107,8 +107,9 @@ if __name__ == "__main__":
     parser.add_argument("--checkpoint_dir", type=str, default="checkpoints/", help="Directory to save checkpoints.")
     parser.add_argument("--data_dir", type=str, default="./data")
     parser.add_argument("--gen_dir", type=str, default="./generated")
+    parser.add_argument("--config-path", type=str, default="config.json")
     args = parser.parse_args()
-    with open("config.json") as f:
+    with open(args.config_path) as f:
         params = json.load(f)
     os.makedirs(args.checkpoint_dir, exist_ok=True)
     os.makedirs(args.gen_dir, exist_ok=True)

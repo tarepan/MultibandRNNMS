@@ -61,3 +61,11 @@ Pretrained weights for the 9-bit model are available in [original repository](ht
 
 ## Acknowlegements
 - https://github.com/fatchord/WaveRNN
+
+## Development notes
+### PyTorch version control
+control with pip/pipenv is so hard because installation target differ depending on evironments.  
+windows needs
+```
+pip3 install https://download.pytorch.org/whl/cu90/torch-1.1.0-cp36-cp36m-win_amd64.whl
+```

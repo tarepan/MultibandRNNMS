@@ -49,6 +49,20 @@ Pretrained weights for the 9-bit model are available [here](https://github.com/b
 2. The model generates 9-bit mu-law audio (planning on training a 10-bit model soon)
 3. Uses an embedding layer instead of one-hot encoding
 
+## Knowledge from Original Repository
+- training speed [issue#5](https://github.com/bshall/UniversalVocoding/issues/5)
+  - intelligible samples by 20k steps
+  - decent results by 60k-80k steps
+  - no data of father step training
+- input spectrogram [issue#4](https://github.com/bshall/UniversalVocoding/issues/4)
+  - more "smoothed" spectrogram could be used
+    - demo of VQ-VAE output (smoothed spec) => RNN_MS => .wav
+- sensitivity to spectrogram shape [issue#3](https://github.com/bshall/UniversalVocoding/issues/3)
+  - stable training regardless of shape
+    - n_fft=1024 also work well
+- other dataset [issue#2](https://github.com/bshall/UniversalVocoding/issues/2)
+  - only ZeroSpeech2019, not yet (seems to be interested in other dataset?)
+
 ### Acknowlegements
 
 - https://github.com/fatchord/WaveRNN

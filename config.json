@@ -23,7 +23,8 @@
             "gamma": 0.5
         },
         "batch_size": 32,
-        "checkpoint_interval": 20000,
+        "checkpoint_interval": 2000,
+        "generation_interval": 20000,
         "num_steps": 100000,
         "sample_frames": 40,
         "audio_slice_frames": 8

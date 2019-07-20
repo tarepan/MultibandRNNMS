@@ -11,8 +11,14 @@ import random
 import glob
 from itertools import chain
 
+# Basic strategy
+# separate data and metadata
+#   metadata contain whether they should be for train or test
 
 def process_wav(wav_path, audio_path, mel_path, params):
+    """Convert wav_path into speaker_id and internally save processed data in arg's pathes.
+    """
+    # auto resample based on params (internally, librosa)
     wav = load_wav(wav_path, sample_rate=params["preprocessing"]["sample_rate"])
     wav /= np.abs(wav).max() * 0.999
     mel = melspectrogram(wav, sample_rate=params["preprocessing"]["sample_rate"],
@@ -39,26 +45,37 @@ def process_wav(wav_path, audio_path, mel_path, params):
 
 
 def preprocess(wav_dirs, out_dir, num_workers, params):
+    # directries generation
+    ## /{out_dir}
+    ##   /audio
+    ##   /mels
     audio_out_dir = os.path.join(out_dir, "audio")
     mel_out_dir = os.path.join(out_dir, "mels")
     os.makedirs(out_dir, exist_ok=True)
     os.makedirs(audio_out_dir, exist_ok=True)
     os.makedirs(mel_out_dir, exist_ok=True)
 
+    # parallel processing preparation
     executor = ProcessPoolExecutor(max_workers=num_workers)
     futures = []
+
+    # directory list => all .wav under dir => flatten to all dirs === iter of all .wav path
     wav_paths = chain.from_iterable(glob.iglob("{}/*.wav".format(dir), recursive=True) for dir in wav_dirs)
     for wav_path in wav_paths:
         fid = os.path.basename(wav_path).replace(".wav", ".npy")
         audio_path = os.path.join(audio_out_dir, fid)
         mel_path = os.path.join(mel_out_dir, fid)
+        # parallel processing registration
         futures.append(executor.submit(partial(process_wav, wav_path, audio_path, mel_path, params)))
 
+    # [(speaker, audio_path, mel_path, len(mel))]
     metadata = [future.result() for future in tqdm(futures)]
     write_metadata(metadata, out_dir, params)
 
 
 def write_metadata(metadata, out_dir, params):
+    # [(speaker, audio_path, mel_path, len(mel))]
+    # shuffle and divide dataset into test & train
     random.shuffle(metadata)
     test = metadata[-params["preprocessing"]["num_evaluation_utterances"]:]
     train = metadata[:-params["preprocessing"]["num_evaluation_utterances"]]

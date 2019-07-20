@@ -9,8 +9,6 @@ import torch.nn.functional as F
 import torch.optim as optim
 from torch.utils.data import DataLoader
 
-import apex
-
 from utils import save_wav
 from dataset import VocoderDataset
 from model import Vocoder
@@ -29,6 +27,10 @@ def save_checkpoint(model, optimizer, scheduler, step, checkpoint_dir):
 
 
 def train_fn(args, params):
+    # Automatic Mixed-Precision
+    if args.optim != "no":
+        import apex
+
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
     model = Vocoder(mel_channels=params["preprocessing"]["num_mels"],

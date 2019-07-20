@@ -9,6 +9,8 @@ import torch.nn.functional as F
 import torch.optim as optim
 from torch.utils.data import DataLoader
 
+import apex
+
 from utils import save_wav
 from dataset import VocoderDataset
 from model import Vocoder
@@ -40,6 +42,10 @@ def train_fn(args, params):
     print(model)
 
     optimizer = optim.Adam(model.parameters(), lr=params["vocoder"]["learning_rate"])
+
+    # Automatic Mixed-Precision
+    model, optimizer = apex.amp.initialize(model, optimizer, opt_level="O1")
+
     scheduler = optim.lr_scheduler.StepLR(optimizer, params["vocoder"]["schedule"]["step_size"], params["vocoder"]["schedule"]["gamma"])
 
     if args.resume is not None:
@@ -73,9 +79,13 @@ def train_fn(args, params):
 
             output = model(audio[:, :-1], mels)
             loss = F.cross_entropy(output.transpose(1, 2), audio[:, 1:])
-
             optimizer.zero_grad()
-            loss.backward()
+
+            # Automatic Mixed-Precision
+            with apex.amp.scale_loss(loss, optimizer) as scaled_loss:
+                scaled_loss.backward()
+            # loss.backward()
+
             optimizer.step()
             scheduler.step()
 

@@ -16,6 +16,7 @@ A PyTorch implementation of **RNN_MS** in "Jaime, et al. (2018) [Towards achievi
 3. Install requirements:
   ```
   pipenv install
+  pipenv install -v --no-cache-dir --global-option="--cpp_ext" --global-option="--cuda_ext" git+https://github.com/NVIDIA/apex.git#egg=apex
   ```
 4. Download and extract ZeroSpeech2019 TTS without the T English dataset:
   ```
@@ -69,3 +70,6 @@ windows needs
 ```
 pip3 install https://download.pytorch.org/whl/cu90/torch-1.1.0-cp36-cp36m-win_amd64.whl
 ```
+### apex install
+pipenv (pipfile) cannot handle "pip install" options.  
+apex needs options, so determined to manual install.    

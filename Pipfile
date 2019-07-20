@@ -10,6 +10,7 @@ numpy = ">=1.16"
 scipy = ">=1.2"
 librosa = "==0.6.3"
 tqdm = "*"
+torch = ">=1.1"
 
 [requires]
 python_version = "3.6"

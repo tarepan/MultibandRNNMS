@@ -30,7 +30,7 @@ A PyTorch implementation of **RNN_MS** in "Jaime, et al. (2018) [Towards achievi
 
 6. Train the model:
   ```
-  pipenv run python train.py
+  pipenv run python UniversalVocoding/train.py
   ```
   
 7. Generate:
@@ -45,6 +45,16 @@ Pretrained weights for the 9-bit model are available in [original repository](ht
 1. Trained on 16kHz audio from 102 different speakers ([ZeroSpeech 2019: TTS without T](https://zerospeech.com/2019/) English dataset)
 2. The model generates 9-bit mu-law audio (planning on training a 10-bit model soon)
 3. Uses an embedding layer instead of one-hot encoding
+4. Default automatic mixed-precision ON (2x speed-up)
+
+## Informative Results
+### Mixed-Precision
+Google Colaboratory Tesla T4  
+default configs  
+(tag + settings)
+
+* w/o apex : 2.04it/s (exp_woApex), 2.02it/s (exp_wApex + "no")  
+* w/  apex : 3.76it/s (exp_wApex + "O1"), 2.30it/s (exp_wApex + "O2"), 3.68it/s (exp_wApex + "O3")
 
 ## Knowledge from Original Repository
 - training speed [issue#5](https://github.com/bshall/UniversalVocoding/issues/5)

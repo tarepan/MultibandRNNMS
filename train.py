@@ -44,7 +44,8 @@ def train_fn(args, params):
     optimizer = optim.Adam(model.parameters(), lr=params["vocoder"]["learning_rate"])
 
     # Automatic Mixed-Precision
-    model, optimizer = apex.amp.initialize(model, optimizer, opt_level=args.optim)
+    if args.optim != "no":
+        model, optimizer = apex.amp.initialize(model, optimizer, opt_level=args.optim)
 
     scheduler = optim.lr_scheduler.StepLR(optimizer, params["vocoder"]["schedule"]["step_size"], params["vocoder"]["schedule"]["gamma"])
 
@@ -82,9 +83,11 @@ def train_fn(args, params):
             optimizer.zero_grad()
 
             # Automatic Mixed-Precision
-            with apex.amp.scale_loss(loss, optimizer) as scaled_loss:
-                scaled_loss.backward()
-            # loss.backward()
+            if args.optim != "no":
+                with apex.amp.scale_loss(loss, optimizer) as scaled_loss:
+                    scaled_loss.backward()
+            else:
+                loss.backward()
 
             optimizer.step()
             scheduler.step()
@@ -119,7 +122,7 @@ if __name__ == "__main__":
     parser.add_argument("--data_dir", type=str, default="./data")
     parser.add_argument("--gen_dir", type=str, default="./generated")
     parser.add_argument("--config-path", type=str, default="config.json")
-    parser.add_argument('--optim', choices=["O0", "O1", "O2", "O3"], default="O1")
+    parser.add_argument('--optim', choices=["no", "O0", "O1", "O2", "O3"], default="O1")
     args = parser.parse_args()
     with open(args.config_path) as f:
         params = json.load(f)

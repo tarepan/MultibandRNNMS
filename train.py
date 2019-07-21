@@ -76,8 +76,8 @@ def train_fn(args, params):
 
     for epoch in range(start_epoch, num_epochs + 1):
         running_loss = 0
-
-        for i, (audio, mels) in enumerate(tqdm(train_dataloader), 1):
+        
+        for i, (audio, mels) in enumerate(tqdm(train_dataloader, leave=False), 1):
             audio, mels = audio.to(device), mels.to(device)
 
             output = model(audio[:, :-1], mels)

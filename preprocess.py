@@ -124,7 +124,12 @@ def main():
     args = parser.parse_args()
     with open(args.config_path) as f:
         params = json.load(f)
-    wav_dirs = [os.path.join(args.data_dir, "train", "unit"), os.path.join(args.data_dir, "train", "voice")]
+    
+    if args.dataset == "ZeroSpeech2019e":
+        wav_dirs = [os.path.join(args.data_dir, "train", "unit"), os.path.join(args.data_dir, "train", "voice")]
+    if args.dataset == "JSUT":
+        wav_dirs = [args.data_dir]
+
     preprocess(args.dataset, wav_dirs, args.output, args.num_workers, params)
 
 

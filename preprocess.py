@@ -79,7 +79,7 @@ def preprocess(dataset: str, wav_dirs, out_dir, num_workers, params):
     futures = []
 
     # directory list => all .wav under dir => flatten to all dirs === iter of all .wav path
-    wav_paths = chain.from_iterable(glob.iglob("{}/*.wav".format(dir), recursive=True) for dir in wav_dirs)
+    wav_paths = chain.from_iterable(glob.iglob(f"{dir}/**/*.wav", recursive=True) for dir in wav_dirs)
     for wav_path in wav_paths:
         # filename
         fid = os.path.basename(wav_path).replace(".wav", ".npy")

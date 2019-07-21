@@ -38,9 +38,19 @@ def process_wav(wav_path, audio_path, mel_path, params):
     wav = np.pad(wav, (pad * params["preprocessing"]["hop_length"],), "constant")
     wav = mulaw_encode(wav, mu=2 ** params["preprocessing"]["bits"])
 
+    #    "path/to/speech.wav"
+    # => ("path/to", "speech.wav")
+    # => "speech.wav"
+    # => ("speech", ".wav")
+    # => "speech"
+    # => <split with "_">
+    # => first element of splits == speaker
     speaker = os.path.splitext(os.path.split(wav_path)[-1])[0].split("_")[0]
+
+    # save processed data
     np.save(audio_path, wav)
     np.save(mel_path, mel)
+    
     return speaker, audio_path, mel_path, len(mel)
 
 
@@ -62,6 +72,7 @@ def preprocess(wav_dirs, out_dir, num_workers, params):
     # directory list => all .wav under dir => flatten to all dirs === iter of all .wav path
     wav_paths = chain.from_iterable(glob.iglob("{}/*.wav".format(dir), recursive=True) for dir in wav_dirs)
     for wav_path in wav_paths:
+        # filename
         fid = os.path.basename(wav_path).replace(".wav", ".npy")
         audio_path = os.path.join(audio_out_dir, fid)
         mel_path = os.path.join(mel_out_dir, fid)

@@ -1,6 +1,7 @@
 # Robust Universal Neural Vocoding
 A PyTorch implementation of **RNN_MS** in "Jaime, et al. (2018) [Towards achieving robust universal neural vocoding](https://arxiv.org/abs/1811.06292)".
-<!-- Audio samples can be found [here](https://bshall.github.io/UniversalVocoding/). -->
+
+Audio samples can be found [here](https://tarepan.github.io/UniversalVocoding).  
 
 
 ![network](network.png?raw=true "Robust Universal Neural Vocoding")

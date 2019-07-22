@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <link rel="stylesheet" type="text/css" href="style.css">
+    <title>Robust Universal Neural Vocoding</title>
+</head>
+<body>
+    <header>
+        <h1>PyTorch implementation of RNN_MS (Robust Universal Neural Vocoding)</h1>
+        <p>A speaker dependent (but practically independent) vocoder trained on the JSUT Japanese dataset</p>
+        <hr>
+    </header>
+    <main>
+        <p>This page contains audio samples from <a href="https://github.com/tarepan/UniversalVocoding">https://github.com/tarepan/UniversalVocoding</a>:<br>
+            a PyTorch implementation <a href="https://arxiv.org/abs/1811.06292">"Robust Universal Neural Vocoding", J. Lorenzo-Trueba Jaime et al, (2018).</a>
+        </p>
+        <h4>Notable differences from the paper:</h4>
+        <ul>
+            <li>Trained on 16kHz audio from 1 Japanese Female speaker (<a href="https://sites.google.com/site/shinnosuketakamichi/publication/jsut">JSUT</a> Japanase dataset)</li>
+            <li>The model generates 9-bit mu-law audio</li>
+            <li>Uses an embedding layer instead of one-hot encoding</li>
+            <li>Trained with Automatic Mixed-Precision</li>
+        </ul>
+        <h2>※ Belows are not made under perfect condition (only 5 hour / 60k step training) ※</h2>
+            <p>c.f. Normally, WaveNet is trained with ~1week, 1000k steps (<a href="https://kokeshing.com/wavenet/">ref</a>)</p>
+        <h2>In-Domain Speakers</h2>
+        <hr>
+        <h3>Speaker - Japanese female</h3>
+        <table>
+            <thead>
+                <th>original</th>
+                <th>generated</th>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><audio src="https://github.com/bshall/UniversalVocoding/blob/master/samples/JSUT_orig.wav?raw=true" controls preload></audio></td>
+                    <td><audio src="https://github.com/bshall/UniversalVocoding/blob/master/samples/JSUT_cnvt.wav?raw=true" controls preload></audio></td>
+                </tr>
+                <!-- <tr>
+                    <td><audio src="https://github.com/bshall/UniversalVocoding/blob/gh-pages/generated/V001_0951978018_model_steps_100000_orig.wav?raw=true" controls preload></audio></td>
+                    <td><audio src="https://github.com/bshall/UniversalVocoding/blob/gh-pages/generated/V001_0951978018_model_steps_100000_gen.wav?raw=true" controls preload></audio></td>
+                </tr> -->
+            </tbody>
+        </table>
+        <h2>Out-of-Domain Speakers (Japanese)</h2>
+        <hr>
+        <h3>Speaker - female (声優統計コーパス)</h3>
+        <table>
+            <thead>
+                <th>original</th>
+                <th>generated</th>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><audio src="https://github.com/bshall/UniversalVocoding/blob/master/samples/voice_actress_001_orig.wav?raw=true" controls preload></audio></td>
+                    <td><audio src="https://github.com/bshall/UniversalVocoding/blob/master/samples/voice_actress_001_cnvt.wav?raw=true" controls preload></audio></td>
+                </tr>
+            </tbody>
+        </table>
+        <h3>Speaker - male (from YouTube)</h3>
+        <table>
+            <thead>
+                <th>original</th>
+                <th>generated</th>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><audio src="https://github.com/bshall/UniversalVocoding/blob/master/samples/YouTube_noja_orig.wav?raw=true" controls preload></audio></td>
+                    <td><audio src="https://github.com/bshall/UniversalVocoding/blob/master/samples/YouTube_noja_cnvt.wav?raw=true" controls preload></audio></td>
+                </tr>
+            </tbody>
+        </table>
+        <h2>Out-of-Domain Speakers (English, which is not contained in training dataset)</h2>
+        <hr>
+        <table>
+            <thead>
+                <th>original</th>
+                <th>generated</th>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><audio src="https://github.com/bshall/UniversalVocoding/blob/master/samples/Zspeech_V002_orig.wav?raw=true" controls preload></audio></td>
+                    <td><audio src="https://github.com/bshall/UniversalVocoding/blob/master/samples/Zspeech_V002_cnvt.wav?raw=true" controls preload></audio></td>
+                </tr>
+            </tbody>
+        </table>
+    </main>
+</body>
+</html>

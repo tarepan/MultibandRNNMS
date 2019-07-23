@@ -65,7 +65,8 @@ class Vocoder(nn.Module):
             h = torch.zeros(batch_size, self.rnn_channels, device=mel.device)
             x = torch.zeros(batch_size, device=mel.device).fill_(self.quantization_channels // 2).long()
 
-            for m in tqdm(torch.unbind(mel, dim=1), leave=False):
+            conditionings = torch.unbind(mel, dim=1)
+            for m in conditionings:
                 x = self.embedding(x)
                 h = cell(torch.cat((x, m), dim=1), h)
 

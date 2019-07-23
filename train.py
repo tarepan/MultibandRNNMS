@@ -110,12 +110,14 @@ def train_fn(args, params):
                 with open(os.path.join(args.data_dir, "test.txt"), encoding="utf-8") as f:
                     test_mel_paths = [line.strip().split("|")[2] for line in f]
 
-                for mel_path in test_mel_paths:
+                for index, mel_path in enumerate(test_mel_paths):
                     utterance_id = os.path.basename(mel_path).split(".")[0]
                     mel = torch.FloatTensor(np.load(mel_path)).unsqueeze(0).to(device)
                     output = model.generate(mel)
                     path = os.path.join(args.gen_dir, "gen_{}_model_steps_{}.wav".format(utterance_id, global_step))
                     save_wav(path, output, params["preprocessing"]["sample_rate"])
+                    if index == 0:
+                        writer.add_audio("cnvt", torch.from_numpy(output), global_step=global_step, sample_rate=params["preprocessing"]["sample_rate"])
         # finish a epoch
         writer.add_scalar("NLL", average_loss, global_step)
 

@@ -15,7 +15,7 @@ from dataset import VocoderDataset
 from model import Vocoder
 
 from utils import mulaw_decode
-
+from expdir import makeExpDirs
 
 def save_checkpoint(model, optimizer, scheduler, step, checkpoint_dir):
     checkpoint_state = {
@@ -23,13 +23,15 @@ def save_checkpoint(model, optimizer, scheduler, step, checkpoint_dir):
         "optimizer": optimizer.state_dict(),
         "scheduler": scheduler.state_dict(),
         "step": step}
-    checkpoint_path = os.path.join(
-        checkpoint_dir, "model.ckpt-{}.pt".format(step))
+    checkpoint_path = checkpoint_dir/f"model.ckpt-{step}.pt"
     torch.save(checkpoint_state, checkpoint_path)
-    print("Saved checkpoint: {}".format(checkpoint_path))
+    print(f"Saved checkpoint: {checkpoint_path}")
 
 
 def train_fn(args, params):
+    # Directory preparation
+    exp_dir = makeExpDirs(args.results_dir, args.exp_name)
+
     # Automatic Mixed-Precision
     if args.optim != "no":
         import apex
@@ -55,7 +57,7 @@ def train_fn(args, params):
     scheduler = optim.lr_scheduler.StepLR(optimizer, params["vocoder"]["schedule"]["step_size"], params["vocoder"]["schedule"]["gamma"])
 
     if args.resume is not None:
-        print("Resume checkpoint from: {}:".format(args.resume))
+        print(f"Resume checkpoint from: {args.resume}:")
         checkpoint = torch.load(args.resume, map_location=lambda storage, loc: storage)
         model.load_state_dict(checkpoint["model"])
         optimizer.load_state_dict(checkpoint["optimizer"])
@@ -78,7 +80,7 @@ def train_fn(args, params):
     start_epoch = global_step // len(train_dataloader) + 1
 
     # Logger
-    writer = SummaryWriter(args.log_dir)
+    writer = SummaryWriter(exp_dir/"logs")
 
     # Add original utterance to TensorBoard
     if args.resume is None:
@@ -117,7 +119,7 @@ def train_fn(args, params):
             global_step += 1
 
             if global_step % params["vocoder"]["checkpoint_interval"] == 0:
-                save_checkpoint(model, optimizer, scheduler, global_step, args.checkpoint_dir)
+                save_checkpoint(model, optimizer, scheduler, global_step, exp_dir/"params")
 
             if global_step % params["vocoder"]["generation_interval"] == 0:
                 with open(os.path.join(args.data_dir, "test.txt"), encoding="utf-8") as f:
@@ -127,8 +129,8 @@ def train_fn(args, params):
                     utterance_id = os.path.basename(mel_path).split(".")[0]
                     mel = torch.FloatTensor(np.load(mel_path)).unsqueeze(0).to(device)
                     output = model.generate(mel)
-                    path = os.path.join(args.gen_dir, "gen_{}_model_steps_{}.wav".format(utterance_id, global_step))
-                    save_wav(path, output, params["preprocessing"]["sample_rate"])
+                    path = exp_dir/"samples"/f"gen_{utterance_id}_model_steps_{global_step}.wav"
+                    save_wav(str(path), output, params["preprocessing"]["sample_rate"])
                     if index == 0:
                         writer.add_audio("cnvt", torch.from_numpy(output), global_step=global_step, sample_rate=params["preprocessing"]["sample_rate"])
         # finish a epoch
@@ -136,17 +138,14 @@ def train_fn(args, params):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("--num_workers", type=int, default=4, help="Number of dataloader workers.")
+    parser.add_argument('--exp-name', type=str, required=True)
     parser.add_argument("--resume", type=str, default=None, help="Checkpoint path to resume")
-    parser.add_argument("--checkpoint_dir", type=str, default="checkpoints/", help="Directory to save checkpoints.")
     parser.add_argument("--data_dir", type=str, default="./data")
-    parser.add_argument("--log_dir", type=str, default="checkpoints/", help="Directory to save checkpoints.")
-    parser.add_argument("--gen_dir", type=str, default="./generated")
+    parser.add_argument('--results-dir', type=str, default="results")
+    parser.add_argument("--num_workers", type=int, default=4, help="Number of dataloader workers.")
     parser.add_argument("--config-path", type=str, default="config.json")
     parser.add_argument('--optim', choices=["no", "O0", "O1", "O2", "O3"], default="O1")
     args = parser.parse_args()
     with open(args.config_path) as f:
         params = json.load(f)
-    os.makedirs(args.checkpoint_dir, exist_ok=True)
-    os.makedirs(args.gen_dir, exist_ok=True)
     train_fn(args, params)

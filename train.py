@@ -14,6 +14,8 @@ from utils import save_wav
 from dataset import VocoderDataset
 from model import Vocoder
 
+from utils import mulaw_decode
+
 
 def save_checkpoint(model, optimizer, scheduler, step, checkpoint_dir):
     checkpoint_state = {
@@ -77,6 +79,17 @@ def train_fn(args, params):
 
     # Logger
     writer = SummaryWriter(args.log_dir)
+
+    # Add original utterance to TensorBoard
+    if args.resume is None:
+        with open(os.path.join(args.data_dir, "test.txt"), encoding="utf-8") as f:
+            test_wavnpy_paths = [line.strip().split("|")[1] for line in f]
+        for index, wavnpy_path in enumerate(test_wavnpy_paths):
+            muraw_npy = np.load(wavnpy_path)
+            wav_npy = mulaw_decode(muraw_npy, 2**params["preprocessing"]["bits"])
+            writer.add_audio("orig", torch.from_numpy(wav_npy), global_step=global_step, sample_rate=params["preprocessing"]["sample_rate"])
+            break
+
 
     for epoch in range(start_epoch, num_epochs + 1):
         running_loss = 0

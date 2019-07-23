@@ -11,6 +11,7 @@ scipy = ">=1.2"
 librosa = "==0.6.3"
 tqdm = "*"
 torch = ">=1.1"
+tensorboard = ">=1.4"
 
 [requires]
 python_version = "3.6"

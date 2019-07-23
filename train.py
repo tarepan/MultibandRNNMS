@@ -8,6 +8,7 @@ import torch
 import torch.nn.functional as F
 import torch.optim as optim
 from torch.utils.data import DataLoader
+from torch.utils.tensorboard import SummaryWriter
 
 from utils import save_wav
 from dataset import VocoderDataset
@@ -74,6 +75,9 @@ def train_fn(args, params):
     num_epochs = params["vocoder"]["num_steps"] // len(train_dataloader) + 1
     start_epoch = global_step // len(train_dataloader) + 1
 
+    # Logger
+    writer = SummaryWriter(args.log_dir)
+
     for epoch in range(start_epoch, num_epochs + 1):
         running_loss = 0
         
@@ -112,9 +116,8 @@ def train_fn(args, params):
                     output = model.generate(mel)
                     path = os.path.join(args.gen_dir, "gen_{}_model_steps_{}.wav".format(utterance_id, global_step))
                     save_wav(path, output, params["preprocessing"]["sample_rate"])
-
-        print("epoch:{}, loss:{:.3f}".format(epoch, average_loss))
-
+        # finish a epoch
+        writer.add_scalar("NLL", average_loss, global_step)
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
@@ -122,6 +125,7 @@ if __name__ == "__main__":
     parser.add_argument("--resume", type=str, default=None, help="Checkpoint path to resume")
     parser.add_argument("--checkpoint_dir", type=str, default="checkpoints/", help="Directory to save checkpoints.")
     parser.add_argument("--data_dir", type=str, default="./data")
+    parser.add_argument("--log_dir", type=str, default="checkpoints/", help="Directory to save checkpoints.")
     parser.add_argument("--gen_dir", type=str, default="./generated")
     parser.add_argument("--config-path", type=str, default="config.json")
     parser.add_argument('--optim', choices=["no", "O0", "O1", "O2", "O3"], default="O1")

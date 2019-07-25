@@ -15,6 +15,7 @@ if __name__ == "__main__":
     parser.add_argument("--gen-dir", type=str, default="./generated")
     parser.add_argument("--wav-path", type=str)
     parser.add_argument("--config-path", type=str, default="config.json")
+    parser.add_argument('--nc', type=bool, default=False, help="True if no-conditioning")
     args = parser.parse_args()
     with open(args.config_path) as f:
         params = json.load(f)
@@ -28,7 +29,8 @@ if __name__ == "__main__":
                     rnn_channels=params["vocoder"]["rnn_channels"],
                     fc_channels=params["vocoder"]["fc_channels"],
                     bits=params["preprocessing"]["bits"],
-                    hop_length=params["preprocessing"]["hop_length"])
+                    hop_length=params["preprocessing"]["hop_length"],
+                    nc=args.nc)
     model.to(device)
 
     print("Load checkpoint from: {}:".format(args.checkpoint))

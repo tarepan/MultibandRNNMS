@@ -9,7 +9,7 @@ from tqdm import tqdm
 class FakeGRU0(nn.Module):
     """Stub of GRU which return all-0 output
     """
-    def __init__(self, mel_channels, conditioning_channels, bidi=True):
+    def __init__(self, mel_channels, conditioning_channels, device, bidi=True):
         super().__init__()
         self.input_dim = mel_channels
         self.hidden_dim = conditioning_channels

@@ -52,7 +52,7 @@ class Vocoder(nn.Module):
 
         # switch rrn1 based on uc flag
         if nc == True:
-            self.rnn1 = FakeGRU0(mel_channels, conditioning_channels, True, device)
+            self.rnn1 = FakeGRU0(mel_channels, conditioning_channels, device, True)
             # output: (batch, seq_len, 2 * conditioning_channels), h_n
             print("--------- Mode: no mel-spec conditioning ---------")
         else:

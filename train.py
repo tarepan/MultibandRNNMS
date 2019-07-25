@@ -44,7 +44,10 @@ def train_fn(args, params):
                     rnn_channels=params["vocoder"]["rnn_channels"],
                     fc_channels=params["vocoder"]["fc_channels"],
                     bits=params["preprocessing"]["bits"],
-                    hop_length=params["preprocessing"]["hop_length"])
+                    hop_length=params["preprocessing"]["hop_length"],
+                    nc=args.nc,
+                    device=device
+                    )
     model.to(device)
     print(model)
 
@@ -127,6 +130,7 @@ def train_fn(args, params):
 
                 for index, mel_path in enumerate(test_mel_paths):
                     utterance_id = os.path.basename(mel_path).split(".")[0]
+                    # unsqueeze: insert in a batch
                     mel = torch.FloatTensor(np.load(mel_path)).unsqueeze(0).to(device)
                     output = model.generate(mel)
                     path = exp_dir/"samples"/f"gen_{utterance_id}_model_steps_{global_step}.wav"
@@ -145,6 +149,7 @@ if __name__ == "__main__":
     parser.add_argument("--num_workers", type=int, default=4, help="Number of dataloader workers.")
     parser.add_argument("--config-path", type=str, default="config.json")
     parser.add_argument('--optim', choices=["no", "O0", "O1", "O2", "O3"], default="O1")
+    parser.add_argument('--nc', type=bool, default=False, help="True if no-conditioning")
     args = parser.parse_args()
     with open(args.config_path) as f:
         params = json.load(f)

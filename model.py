@@ -53,6 +53,7 @@ class Vocoder(nn.Module):
         if nc == True:
             self.rnn1 = FakeGRU0(mel_channels, conditioning_channels, True)
             # output: (batch, seq_len, 2 * conditioning_channels), h_n
+            print("--------- Mode: no mel-spec conditioning ---------")
         else:
             self.rnn1 = nn.GRU(mel_channels, conditioning_channels, num_layers=2, batch_first=True, bidirectional=True)
             # output: (batch, seq_len, 2 * conditioning_channels), h_n

@@ -45,7 +45,8 @@ def train_fn(args, params):
                     fc_channels=params["vocoder"]["fc_channels"],
                     bits=params["preprocessing"]["bits"],
                     hop_length=params["preprocessing"]["hop_length"],
-                    nc=args.nc
+                    nc=args.nc,
+                    device=device
                     )
     model.to(device)
     print(model)

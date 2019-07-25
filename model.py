@@ -13,6 +13,7 @@ class FakeGRU0(nn.Module):
         super().__init__()
         self.input_dim = mel_channels
         self.hidden_dim = conditioning_channels
+        self.device = device
         self.factor = 1
         if bidi == True:
             self.factor = 2
@@ -25,7 +26,7 @@ class FakeGRU0(nn.Module):
             Tensor(B, length, hidden*2)
         """
         s = mels.size()
-        return torch.zeros(s[0], s[1], self.hidden_dim*self.factor), 0
+        return torch.zeros(s[0], s[1], self.hidden_dim*self.factor).to(self.device), 0
 
 
 def get_gru_cell(gru):
@@ -39,7 +40,7 @@ def get_gru_cell(gru):
 
 class Vocoder(nn.Module):
     def __init__(self, mel_channels, conditioning_channels, embedding_dim,
-                 rnn_channels, fc_channels, bits, hop_length, nc:bool):
+                 rnn_channels, fc_channels, bits, hop_length, nc:bool, device):
         """RNN_MS
         Arguments:
             nc {bool} -- if True, mel-spec conditioning is OFF
@@ -51,7 +52,7 @@ class Vocoder(nn.Module):
 
         # switch rrn1 based on uc flag
         if nc == True:
-            self.rnn1 = FakeGRU0(mel_channels, conditioning_channels, True)
+            self.rnn1 = FakeGRU0(mel_channels, conditioning_channels, True, device)
             # output: (batch, seq_len, 2 * conditioning_channels), h_n
             print("--------- Mode: no mel-spec conditioning ---------")
         else:

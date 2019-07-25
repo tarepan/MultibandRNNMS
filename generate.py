@@ -30,7 +30,8 @@ if __name__ == "__main__":
                     fc_channels=params["vocoder"]["fc_channels"],
                     bits=params["preprocessing"]["bits"],
                     hop_length=params["preprocessing"]["hop_length"],
-                    nc=args.nc)
+                    nc=args.nc,
+                    device=device)
     model.to(device)
 
     print("Load checkpoint from: {}:".format(args.checkpoint))

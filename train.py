@@ -123,7 +123,7 @@ def train_fn(args, params):
 
             global_step += 1
 
-            if global_step % 10 == 0:
+            if global_step % args.save_step == 0:
                 save_checkpoint(model, optimizer, scheduler, global_step, exp_dir/"params", False)
 
             if global_step % params["vocoder"]["checkpoint_interval"] == 0:
@@ -155,6 +155,7 @@ if __name__ == "__main__":
     parser.add_argument("--config-path", type=str, default="config.json")
     parser.add_argument('--optim', choices=["no", "O0", "O1", "O2", "O3"], default="O1")
     parser.add_argument('--nc', type=bool, default=False, help="True if no-conditioning")
+    parser.add_argument('--save-step', type=int, default=10, help="save per this step")
     args = parser.parse_args()
     with open(args.config_path) as f:
         params = json.load(f)

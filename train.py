@@ -17,15 +17,17 @@ from model import Vocoder
 from utils import mulaw_decode
 from expdir import makeExpDirs
 
-def save_checkpoint(model, optimizer, scheduler, step, checkpoint_dir):
+def save_checkpoint(model, optimizer, scheduler, step, checkpoint_dir, ckpt:bool):
     checkpoint_state = {
         "model": model.state_dict(),
         "optimizer": optimizer.state_dict(),
         "scheduler": scheduler.state_dict(),
         "step": step}
-    checkpoint_path = checkpoint_dir/f"model.ckpt-{step}.pt"
-    torch.save(checkpoint_state, checkpoint_path)
-    print(f"Saved checkpoint: {checkpoint_path}")
+    torch.save(checkpoint_state, checkpoint_dir/"model-latest.pt")
+    if ckpt == True:
+        torch.save(checkpoint_state, checkpoint_dir/f"model.ckpt-{step}.pt")
+        print(f"Saved checkpoint #{step}")
+    return
 
 
 def train_fn(args, params):
@@ -121,8 +123,11 @@ def train_fn(args, params):
 
             global_step += 1
 
+            if global_step % 10 == 0:
+                save_checkpoint(model, optimizer, scheduler, global_step, exp_dir/"params", False)
+
             if global_step % params["vocoder"]["checkpoint_interval"] == 0:
-                save_checkpoint(model, optimizer, scheduler, global_step, exp_dir/"params")
+                save_checkpoint(model, optimizer, scheduler, global_step, exp_dir/"params", True)
 
             if global_step % params["vocoder"]["generation_interval"] == 0:
                 with open(os.path.join(args.data_dir, "test.txt"), encoding="utf-8") as f:

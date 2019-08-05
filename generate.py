@@ -5,7 +5,7 @@ import json
 import torch
 import numpy as np
 
-from model import Vocoder
+from model import RNN_MS as Vocoder
 from utils import load_wav, save_wav, melspectrogram
 
 if __name__ == "__main__":

@@ -12,7 +12,7 @@ from torch.utils.tensorboard import SummaryWriter
 
 from utils import save_wav
 from dataset import VocoderDataset
-from model import Vocoder
+from model import RNN_MS as Vocoder
 
 from expdir import makeExpDirs
 from torchaudio.functional import mu_law_decoding

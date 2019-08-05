@@ -51,6 +51,6 @@ if __name__ == "__main__":
                          win_length=params["preprocessing"]["win_length"],
                          fmin=params["preprocessing"]["fmin"])
     mel = torch.FloatTensor(mel).unsqueeze(0).to(device)
-    output = model.generate(mel)
+    output = np.asarray(model.generate(mel), dtype=np.float64)
     path = os.path.join(args.gen_dir, "gen_{}_model_steps_{}.wav".format(utterance_id, model_step))
     save_wav(path, output, params["preprocessing"]["sample_rate"])

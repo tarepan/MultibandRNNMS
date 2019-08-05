@@ -1,10 +1,8 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-import numpy as np
-from utils import mulaw_decode
 from tqdm import tqdm
-
+from torchaudio.transforms import MuLawDecoding
 
 class FakeGRU0(nn.Module):
     """Stub of GRU which return all-0 output
@@ -62,6 +60,7 @@ class Vocoder(nn.Module):
         self.rnn2 = nn.GRU(embedding_dim + 2 * conditioning_channels, rnn_channels, batch_first=True)
         self.fc1 = nn.Linear(rnn_channels, fc_channels)
         self.fc2 = nn.Linear(fc_channels, self.quantization_channels)
+        self.mulaw_dec = MuLawDecoding(self.quantization_channels)
 
     def forward(self, x, mels):
         """forward computation for training
@@ -125,8 +124,6 @@ class Vocoder(nn.Module):
                 x = dist.sample()
                 output.append(2 * x.float().item() / (self.quantization_channels - 1.) - 1.)
 
-        output = np.asarray(output, dtype=np.float64)
-        output = mulaw_decode(output, self.quantization_channels)
-
+        output = self.mulaw_dec(output)
         self.train()
         return output

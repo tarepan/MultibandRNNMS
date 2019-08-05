@@ -14,8 +14,9 @@ from utils import save_wav
 from dataset import VocoderDataset
 from model import Vocoder
 
-from utils import mulaw_decode
 from expdir import makeExpDirs
+from torchaudio.functional import mu_law_decoding
+
 
 def save_checkpoint(model, optimizer, scheduler, step, checkpoint_dir, ckpt:bool):
     checkpoint_state = {
@@ -92,9 +93,9 @@ def train_fn(args, params):
         with open(os.path.join(args.data_dir, "test.txt"), encoding="utf-8") as f:
             test_wavnpy_paths = [line.strip().split("|")[1] for line in f]
         for index, wavnpy_path in enumerate(test_wavnpy_paths):
-            muraw_npy = np.load(wavnpy_path)
-            wav_npy = mulaw_decode(muraw_npy, 2**params["preprocessing"]["bits"])
-            writer.add_audio("orig", torch.from_numpy(wav_npy), global_step=global_step, sample_rate=params["preprocessing"]["sample_rate"])
+            muraw_code = torch.from_numpy(np.load(wavnpy_path))
+            wav_pth = mu_law_decoding(muraw_code, 2**params["preprocessing"]["bits"])
+            writer.add_audio("orig", wav_pth, global_step=global_step, sample_rate=params["preprocessing"]["sample_rate"])
             break
 
 
@@ -137,7 +138,7 @@ def train_fn(args, params):
                     utterance_id = os.path.basename(mel_path).split(".")[0]
                     # unsqueeze: insert in a batch
                     mel = torch.FloatTensor(np.load(mel_path)).unsqueeze(0).to(device)
-                    output = model.generate(mel)
+                    output = np.asarray(model.generate(mel), dtype=np.float64)
                     path = exp_dir/"samples"/f"gen_{utterance_id}_model_steps_{global_step}.wav"
                     save_wav(str(path), output, params["preprocessing"]["sample_rate"])
                     if index == 0:

@@ -64,8 +64,14 @@ class Vocoder(nn.Module):
         self.fc2 = nn.Linear(fc_channels, self.quantization_channels)
 
     def forward(self, x, mels):
-        """
-            mels {Tensor(Batch, Time, Freq)}
+        """forward computation for training
+        
+        Arguments:
+            x -- u-law encoded utterance for self-supervised learning
+            mels {Tensor(Batch, Time, Freq)} -- preprocessed mel-spectrogram
+        
+        Returns:
+            Tensor(Batch, Time, before_softmax) -- time-series output
         """
         sample_frames = mels.size(1)
         audio_slice_frames = x.size(1) // self.hop_length
@@ -75,16 +81,16 @@ class Vocoder(nn.Module):
         mels, _ = self.rnn1(mels)
         mels = mels[:, pad:pad + audio_slice_frames, :]
 
+        # Cond. Upsampling
         mels = F.interpolate(mels.transpose(1, 2), scale_factor=self.hop_length)
         mels = mels.transpose(1, 2)
 
+        # Autoregressive
         x = self.embedding(x)
-
-        # AR
         x, _ = self.rnn2(torch.cat((x, mels), dim=2))
-
         x = F.relu(self.fc1(x))
         x = self.fc2(x)
+
         return x
 
     def generate(self, mel):
@@ -97,26 +103,25 @@ class Vocoder(nn.Module):
             # Conditioning
             mel, _ = self.rnn1(mel)
 
+            # Cond. Upsampling
             mel = F.interpolate(mel.transpose(1, 2), scale_factor=self.hop_length)
             mel = mel.transpose(1, 2)
 
+            # Autoregressive
+            ## initialization
             batch_size, sample_size, _ = mel.size()
-
             h = torch.zeros(batch_size, self.rnn_channels, device=mel.device)
             x = torch.zeros(batch_size, device=mel.device).fill_(self.quantization_channels // 2).long()
-
+            ## Manual AR Loop
+            ### separate speech-conditioning according to Time
             conditionings = torch.unbind(mel, dim=1)
-            # AR
             for m in conditionings:
                 x = self.embedding(x)
                 h = cell(torch.cat((x, m), dim=1), h)
-
                 x = F.relu(self.fc1(h))
                 logits = self.fc2(x)
-
                 posterior = F.softmax(logits, dim=1)
                 dist = torch.distributions.Categorical(posterior)
-
                 x = dist.sample()
                 output.append(2 * x.float().item() / (self.quantization_channels - 1.) - 1.)
 

@@ -11,18 +11,6 @@ def save_wav(path, wav, sample_rate):
     librosa.output.write_wav(path, wav.astype(np.float32), sr=sample_rate)
 
 
-def mulaw_encode(x, mu):
-    mu = mu - 1
-    fx = np.sign(x) * np.log1p(mu * np.abs(x)) / np.log1p(mu)
-    return np.floor((fx + 1) / 2 * mu + 0.5)
-
-
-def mulaw_decode(y, mu):
-    mu = mu - 1
-    x = np.sign(y) / mu * ((1 + mu) ** np.abs(y) - 1)
-    return x
-
-
 def preemphasis(x, preemph):
     return scipy.signal.lfilter([1, -preemph], [1], x)
 

@@ -6,10 +6,12 @@ from multiprocessing import cpu_count
 from concurrent.futures import ProcessPoolExecutor
 from functools import partial
 from tqdm import tqdm
-from utils import load_wav, mulaw_encode, melspectrogram
+from utils import load_wav, melspectrogram
 import random
 import glob
 from itertools import chain
+from torchaudio.functional import mu_law_encoding
+import torch
 
 # Basic strategy
 # separate data and metadata
@@ -36,8 +38,8 @@ def process_wav(dataset, wav_path, audio_path, mel_path, params):
     pad = (params["vocoder"]["sample_frames"] - params["vocoder"]["audio_slice_frames"]) // 2
     mel = np.pad(mel, ((pad,), (0,)), "constant")
     wav = np.pad(wav, (pad * params["preprocessing"]["hop_length"],), "constant")
-    wav = mulaw_encode(wav, mu=2 ** params["preprocessing"]["bits"])
-
+    wav = mu_law_encoding(torch.from_numpy(wav), mu=2 ** params["preprocessing"]["bits"])
+    wav = wav.numpy()
     # speakerID acuisition
     speaker = get_speakerid(wav_path, dataset)
 

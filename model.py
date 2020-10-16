@@ -1,10 +1,8 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-import numpy as np
-from utils import mulaw_decode
 from tqdm import tqdm
-
+from torchaudio.transforms import MuLawDecoding
 
 class FakeGRU0(nn.Module):
     """Stub of GRU which return all-0 output
@@ -38,7 +36,91 @@ def get_gru_cell(gru):
     return gru_cell
 
 
-class Vocoder(nn.Module):
+class SpecEncoder(nn.Module):
+    """2-layer bidirectional GRU mel-spectrogram encoder
+    """
+    def __init__(self, dim_mel_freq, dim_latent, hop_length):
+        super().__init__()
+        self.hop_length = hop_length
+        self.rnn1 = nn.GRU(dim_mel_freq, dim_latent, num_layers=2, batch_first=True, bidirectional=True)
+
+    def forward(self, x, mels):
+        """forward computation for training. Mel-Spec => latent series.
+        Arguments:
+            mels {Tensor(Batch, Time, Freq)} -- preprocessed mel-spectrogram
+        Returns:
+            Tensor(Batch, Time, 2 * dim_latent) -- time-series output latents
+        """
+        dim_mels_time = mels.size(1)
+        audio_slice_frames = x.size(1) // self.hop_length
+        pad = (dim_mels_time - audio_slice_frames) // 2
+
+        mels, _ = self.rnn1(mels)
+        mels = mels[:, pad:pad + audio_slice_frames, :]
+        return mels
+
+    def generate(self, mels):
+        mels, _ = self.rnn1(mels)
+        return mels
+
+
+class SimpleAR(nn.Module):
+    """Simple 1-layer GRU AutoRegressive Generative Model
+    """
+    def __init__(self, conditioning_channels, embedding_dim, rnn_channels, fc_channels, bits):
+        super().__init__()
+        self.rnn_channels = rnn_channels
+        self.quantization_channels = 2**bits
+        self.embedding = nn.Embedding(self.quantization_channels, embedding_dim)
+        self.rnn2 = nn.GRU(embedding_dim + 2 * conditioning_channels, rnn_channels, batch_first=True)
+        self.fc1 = nn.Linear(rnn_channels, fc_channels)
+        self.fc2 = nn.Linear(fc_channels, self.quantization_channels)
+        self.mulaw_dec = MuLawDecoding(self.quantization_channels)
+
+    def forward(self, x, latents):
+        """forward computation for training
+        
+        Arguments:
+            x -- u-law encoded utterance for self-supervised learning
+            latents {Tensor(Batch, Time, Freq)} -- preprocessed mel-spectrogram latent time series
+        
+        Returns:
+            Tensor(Batch, Time, before_softmax) -- time-series output
+        """
+        x = self.embedding(x)
+        x, _ = self.rnn2(torch.cat((x, latents), dim=2))
+        x = F.relu(self.fc1(x))
+        x = self.fc2(x)
+        return x
+
+    def generate(self, latents):
+        output = []
+        cell = get_gru_cell(self.rnn2)
+        # initialization
+        batch_size, sample_size, _ = latents.size()
+        h = torch.zeros(batch_size, self.rnn_channels, device=latents.device)
+        x = torch.zeros(batch_size, device=latents.device).fill_(self.quantization_channels // 2).long()
+
+        # Manual AR Loop
+        # separate speech-conditioning according to Time
+        conditionings = torch.unbind(latents, dim=1)
+        for m in conditionings:
+            x = self.embedding(x)
+            h = cell(torch.cat((x, m), dim=1), h)
+            x = F.relu(self.fc1(h))
+            logits = self.fc2(x)
+            posterior = F.softmax(logits, dim=1)
+            dist = torch.distributions.Categorical(posterior)
+            x = dist.sample()
+            output.append(2 * x.float().item() / (self.quantization_channels - 1.) - 1.)
+
+        output = self.mulaw_dec(output)
+        return output
+
+
+class RNN_MS(nn.Module):
+    """RNN_MS: Universal Vocoder
+    """
     def __init__(self, mel_channels, conditioning_channels, embedding_dim,
                  rnn_channels, fc_channels, bits, hop_length, nc:bool, device):
         """RNN_MS
@@ -52,16 +134,13 @@ class Vocoder(nn.Module):
 
         # switch rrn1 based on uc flag
         if nc == True:
-            self.rnn1 = FakeGRU0(mel_channels, conditioning_channels, device, True)
+            self.condNet = FakeGRU0(mel_channels, conditioning_channels, device, True)
             # output: (batch, seq_len, 2 * conditioning_channels), h_n
             print("--------- Mode: no mel-spec conditioning ---------")
         else:
-            self.rnn1 = nn.GRU(mel_channels, conditioning_channels, num_layers=2, batch_first=True, bidirectional=True)
+            self.condNet = SpecEncoder(mel_channels, conditioning_channels, hop_length)
             # output: (batch, seq_len, 2 * conditioning_channels), h_n
-        self.embedding = nn.Embedding(self.quantization_channels, embedding_dim)
-        self.rnn2 = nn.GRU(embedding_dim + 2 * conditioning_channels, rnn_channels, batch_first=True)
-        self.fc1 = nn.Linear(rnn_channels, fc_channels)
-        self.fc2 = nn.Linear(fc_channels, self.quantization_channels)
+        self.AR_net = SimpleAR(conditioning_channels, embedding_dim, rnn_channels, fc_channels, bits)
 
     def forward(self, x, mels):
         """forward computation for training
@@ -73,60 +152,29 @@ class Vocoder(nn.Module):
         Returns:
             Tensor(Batch, Time, before_softmax) -- time-series output
         """
-        sample_frames = mels.size(1)
-        audio_slice_frames = x.size(1) // self.hop_length
-        pad = (sample_frames - audio_slice_frames) // 2
-
-        # Conditioning
-        mels, _ = self.rnn1(mels)
-        mels = mels[:, pad:pad + audio_slice_frames, :]
+        # Encoding for conditioning
+        latents = self.condNet(x, mels)
 
         # Cond. Upsampling
-        mels = F.interpolate(mels.transpose(1, 2), scale_factor=self.hop_length)
-        mels = mels.transpose(1, 2)
+        latents = F.interpolate(latents.transpose(1, 2), scale_factor=self.hop_length)
+        latents = latents.transpose(1, 2)
 
         # Autoregressive
-        x = self.embedding(x)
-        x, _ = self.rnn2(torch.cat((x, mels), dim=2))
-        x = F.relu(self.fc1(x))
-        x = self.fc2(x)
+        x = self.AR_net(x, latents)
 
         return x
 
     def generate(self, mel):
         self.eval()
-
-        output = []
-        cell = get_gru_cell(self.rnn2)
-
         with torch.no_grad():
-            # Conditioning
-            mel, _ = self.rnn1(mel)
+            # Encoding for conditioning
+            latents = self.condNet.generate(mel)
 
             # Cond. Upsampling
-            mel = F.interpolate(mel.transpose(1, 2), scale_factor=self.hop_length)
-            mel = mel.transpose(1, 2)
+            latents = F.interpolate(latents.transpose(1, 2), scale_factor=self.hop_length)
+            latents = latents.transpose(1, 2)
 
             # Autoregressive
-            ## initialization
-            batch_size, sample_size, _ = mel.size()
-            h = torch.zeros(batch_size, self.rnn_channels, device=mel.device)
-            x = torch.zeros(batch_size, device=mel.device).fill_(self.quantization_channels // 2).long()
-            ## Manual AR Loop
-            ### separate speech-conditioning according to Time
-            conditionings = torch.unbind(mel, dim=1)
-            for m in conditionings:
-                x = self.embedding(x)
-                h = cell(torch.cat((x, m), dim=1), h)
-                x = F.relu(self.fc1(h))
-                logits = self.fc2(x)
-                posterior = F.softmax(logits, dim=1)
-                dist = torch.distributions.Categorical(posterior)
-                x = dist.sample()
-                output.append(2 * x.float().item() / (self.quantization_channels - 1.) - 1.)
-
-        output = np.asarray(output, dtype=np.float64)
-        output = mulaw_decode(output, self.quantization_channels)
-
+            output = self.AR_net.generate(latents)
         self.train()
         return output

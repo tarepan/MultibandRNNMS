@@ -1,12 +1,23 @@
-# Robust Universal Neural Vocoding
-A PyTorch implementation of **RNN_MS** in "Jaime, et al. (2018) [Towards achieving robust universal neural vocoding](https://arxiv.org/abs/1811.06292)".
+<div align="center">
 
-Audio samples can be found [here](https://tarepan.github.io/UniversalVocoding).  
+# RNN_MS-PyTorch <!-- omit in toc -->
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)][notebook]
+[![Paper](http://img.shields.io/badge/paper-arxiv.1811.06292-B31B1B.svg)][paper]  
 
+</div>
+
+Reimplmentation of neural vocoder **"RNN_MS"** with PyTorch.
 
 ![network](network.png?raw=true "Robust Universal Neural Vocoding")
 
-## Quick Start
+## Demo
+[Audio sample page](https://tarepan.github.io/UniversalVocoding).  
+
+## How to Use
+### Quick training <!-- omit in toc -->
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)][notebook]
+
+### Train
 1. Ensure you have PyTorch@>=1.1.
 
 2. Clone the repo:
@@ -74,6 +85,18 @@ default configs
 ## Acknowlegements
 - https://github.com/fatchord/WaveRNN
 
+## Original paper
+[![Paper](http://img.shields.io/badge/paper-arxiv.1811.06292-B31B1B.svg)][paper]  
+<!-- https://arxiv2bibtex.org/?q=1811.06292&format=bibtex -->
+```
+@misc{1811.06292,
+Author = {Jaime Lorenzo-Trueba and Thomas Drugman and Javier Latorre and Thomas Merritt and Bartosz Putrycz and Roberto Barra-Chicote and Alexis Moinet and Vatsal Aggarwal},
+Title = {Towards achieving robust universal neural vocoding},
+Year = {2018},
+Eprint = {arXiv:1811.06292},
+}
+```
+
 ## Development notes
 ### PyTorch version control
 control with pip/pipenv is so hard because installation target differ depending on evironments.  
@@ -83,4 +106,18 @@ pip3 install https://download.pytorch.org/whl/cu90/torch-1.1.0-cp36-cp36m-win_am
 ```
 ### apex install
 pipenv (pipfile) cannot handle "pip install" options.  
-apex needs options, so determined to manual install.    
+apex needs options, so determined to manual install.  
+
+## Dependency Notes
+### PyTorch version <!-- omit in toc -->
+PyTorch version: PyTorch v1.6 is working (We checked with v1.6.0).  
+
+For dependency resolution, we do **NOT** explicitly specify the compatible versions.  
+PyTorch have several distributions for various environment (e.g. compatible CUDA version.)  
+Unfortunately it make dependency version management complicated for dependency management system.  
+In our case, the system `poetry` cannot handle cuda variant string (e.g. `torch>=1.6.0` cannot accept `1.6.0+cu101`.)  
+In order to resolve this problem, we use `torch==*`, it is equal to no version specification.  
+`Setup.py` could resolve this problem (e.g. `torchaudio`'s `setup.py`), but we will not bet our effort to this hacky method.  
+
+[paper]:https://arxiv.org/abs/1811.06292
+[notebook]:https://colab.research.google.com/github/tarepan/UniversalVocoding/blob/main/UniversalVocoding.ipynb

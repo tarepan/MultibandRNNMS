@@ -39,14 +39,26 @@ def get_gru_cell(gru):
 class SpecEncoder(nn.Module):
     """2-layer bidirectional GRU mel-spectrogram encoder
     """
-    def __init__(self, dim_mel_freq, dim_latent, hop_length):
+    def __init__(self, dim_mel_freq: int, dim_latent: int, hop_length):
+        """Initiate SpecEncoder.
+
+        Args:
+            dim_mel_freq : input vector dimension == input spectrogram frequency dimension
+            dim_latent : hidden/output vector dimension
+            hop_length ([type]): [description]
+        """
         super().__init__()
         self.hop_length = hop_length
-        self.rnn1 = nn.GRU(dim_mel_freq, dim_latent, num_layers=2, batch_first=True, bidirectional=True)
+        ## 2-layer bidirectional GRU
+        self.rnn = nn.GRU(dim_mel_freq, dim_latent, num_layers=2, batch_first=True, bidirectional=True)
 
     def forward(self, x, mels):
-        """forward computation for training. Mel-Spec => latent series.
-        Arguments:
+        """forward computation for training.
+        
+        Mel-Spec => latent series.
+        This is RNN, so time dimension is preserved.
+
+        Args:
             mels {Tensor(Batch, Time, Freq)} -- preprocessed mel-spectrogram
         Returns:
             Tensor(Batch, Time, 2 * dim_latent) -- time-series output latents
@@ -55,12 +67,12 @@ class SpecEncoder(nn.Module):
         audio_slice_frames = x.size(1) // self.hop_length
         pad = (dim_mels_time - audio_slice_frames) // 2
 
-        mels, _ = self.rnn1(mels)
+        mels, _ = self.rnn(mels)
         mels = mels[:, pad:pad + audio_slice_frames, :]
         return mels
 
     def generate(self, mels):
-        mels, _ = self.rnn1(mels)
+        mels, _ = self.rnn(mels)
         return mels
 
 
@@ -124,9 +136,12 @@ class RNN_MS(nn.Module):
     def __init__(self, mel_channels, conditioning_channels, embedding_dim,
                  rnn_channels, fc_channels, bits, hop_length, nc:bool, device):
         """RNN_MS
-        Arguments:
-            nc {bool} -- if True, mel-spec conditioning is OFF
+        Args:
+            mel_channels: 
+            conditioning_channels: 
+            nc: If True, mel-spec conditioning is OFF
         """
+
         super().__init__()
         self.rnn_channels = rnn_channels
         self.quantization_channels = 2**bits

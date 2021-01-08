@@ -50,6 +50,11 @@ Reimplmentation of neural vocoder **"RNN_MS"** with PyTorch.
   pipenv run python generate.py --checkpoint=/path/to/checkpoint.pt --wav-path=/path/to/wav.wav
   ```
 
+## System details
+### Model
+Encoder: 2-layer bidi-GRU (so that no time-directional compression)  
+Decoder: Simple AR  
+
 ## Pretrained Models
 Pretrained weights for the 9-bit model are available in [original repository](https://github.com/bshall/UniversalVocoding/releases/tag/v0.1).
 

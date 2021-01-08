@@ -18,6 +18,10 @@ from expdir import makeExpDirs
 from torchaudio.functional import mu_law_decoding
 
 
+# Semantically matched with original train.py 
+
+
+# -- deletable
 def save_checkpoint(model, optimizer, scheduler, step, checkpoint_dir, ckpt:bool):
     checkpoint_state = {
         "model": model.state_dict(),
@@ -29,9 +33,10 @@ def save_checkpoint(model, optimizer, scheduler, step, checkpoint_dir, ckpt:bool
         torch.save(checkpoint_state, checkpoint_dir/f"model.ckpt-{step}.pt")
         print(f"Saved checkpoint #{step}")
     return
-
+# --
 
 def train_fn(args, params):
+    # -- deletable
     # Directory preparation
     exp_dir = makeExpDirs(args.results_dir, args.exp_name)
 
@@ -40,7 +45,9 @@ def train_fn(args, params):
         import apex
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    # --
 
+    # ?
     model = Vocoder(mel_channels=params["preprocessing"]["num_mels"],
                     conditioning_channels=params["vocoder"]["conditioning_channels"],
                     embedding_dim=params["vocoder"]["embedding_dim"],
@@ -54,14 +61,21 @@ def train_fn(args, params):
     model.to(device)
     print(model)
 
+    # -- match with origin
     optimizer = optim.Adam(model.parameters(), lr=params["vocoder"]["learning_rate"])
+    # --
 
+    # -- deletable
     # Automatic Mixed-Precision
     if args.optim != "no":
         model, optimizer = apex.amp.initialize(model, optimizer, opt_level=args.optim)
+    # --
 
+    # -- match with origin
     scheduler = optim.lr_scheduler.StepLR(optimizer, params["vocoder"]["schedule"]["step_size"], params["vocoder"]["schedule"]["gamma"])
+    # --
 
+    # -- deletable
     if args.resume is not None:
         print(f"Resume checkpoint from: {args.resume}:")
         checkpoint = torch.load(args.resume, map_location=lambda storage, loc: storage)
@@ -71,23 +85,30 @@ def train_fn(args, params):
         global_step = checkpoint["step"]
     else:
         global_step = 0
+    # --
 
+    # ?
     train_dataset = VocoderDataset(meta_file=os.path.join(args.data_dir, "train.txt"),
                                    sample_frames=params["vocoder"]["sample_frames"],
                                    audio_slice_frames=params["vocoder"]["audio_slice_frames"],
                                    hop_length=params["preprocessing"]["hop_length"],
                                    bits=params["preprocessing"]["bits"])
 
+    # -- matched with origin
     train_dataloader = DataLoader(train_dataset, batch_size=params["vocoder"]["batch_size"],
                                   shuffle=True, num_workers=1,
-                                  pin_memory=True)
+                                  pin_memory=True, drop_last=True)
+    # --
 
+    # -- deletable
     num_epochs = params["vocoder"]["num_steps"] // len(train_dataloader) + 1
     start_epoch = global_step // len(train_dataloader) + 1
 
     # Logger
     writer = SummaryWriter(exp_dir/"logs")
+    # --
 
+    # -- looks good. can be transplanted.
     # Add original utterance to TensorBoard
     if args.resume is None:
         with open(os.path.join(args.data_dir, "test.txt"), encoding="utf-8") as f:
@@ -97,6 +118,7 @@ def train_fn(args, params):
             wav_pth = mu_law_decoding(muraw_code, 2**params["preprocessing"]["bits"])
             writer.add_audio("orig", wav_pth, global_step=global_step, sample_rate=params["preprocessing"]["sample_rate"])
             break
+    # --
 
     # epoch loop
     for epoch in range(start_epoch, num_epochs + 1):

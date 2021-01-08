@@ -98,27 +98,32 @@ def train_fn(args, params):
             writer.add_audio("orig", wav_pth, global_step=global_step, sample_rate=params["preprocessing"]["sample_rate"])
             break
 
-
+    # epoch loop
     for epoch in range(start_epoch, num_epochs + 1):
         running_loss = 0
         
+        # step loop
         for i, (audio, mels) in enumerate(tqdm(train_dataloader, leave=False), 1):
             audio, mels = audio.to(device), mels.to(device)
 
+            # Forward
             output = model(audio[:, :-1], mels)
+
+            # Loss and backward
             loss = F.cross_entropy(output.transpose(1, 2), audio[:, 1:])
             optimizer.zero_grad()
-
             # Automatic Mixed-Precision
             if args.optim != "no":
                 with apex.amp.scale_loss(loss, optimizer) as scaled_loss:
                     scaled_loss.backward()
             else:
                 loss.backward()
-
             optimizer.step()
+
+            # Optim step
             scheduler.step()
 
+            # Logging
             running_loss += loss.item()
             average_loss = running_loss / i
 
@@ -145,6 +150,7 @@ def train_fn(args, params):
                         writer.add_audio("cnvt", torch.from_numpy(output), global_step=global_step, sample_rate=params["preprocessing"]["sample_rate"])
         # finish a epoch
         writer.add_scalar("NLL", average_loss, global_step)
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()

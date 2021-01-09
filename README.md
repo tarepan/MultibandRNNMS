@@ -18,18 +18,23 @@ Reimplmentation of neural vocoder **"RNN_MS"** with PyTorch.
 [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)][notebook]
 
 ### Train
-1. Ensure you have PyTorch@>=1.1.
+### Install
 
-2. Clone the repo:
-  ```
-  git clone https://github.com/tarepan/UniversalVocoding.git
-  cd ./UniversalVocoding
-  ```
-3. Install requirements:
-  ```
-  pipenv install
-  pipenv install -v --no-cache-dir --global-option="--cpp_ext" --global-option="--cuda_ext" git+https://github.com/NVIDIA/apex.git#egg=apex
-  ```
+1. Prepare `rnnms`
+
+```bash
+!pip install git+https://github.com/tarepan/UniversalVocoding -q
+```
+
+2. Preprocess corpus as dataset
+
+
+3. Run training
+
+```bash
+!python -m rnnms.main_train --num_workers=0 "--dir_root=gdrive/My Drive/ML_results" "--name_exp=rnnms" "--name_version=version_0" "--adress_data_root=gdrive/My Drive/ML_data"
+```
+
 4. Download and extract ZeroSpeech2019 TTS without the T English dataset:
   ```
   wget https://download.zerospeech.com/2019/english.tgz
@@ -38,11 +43,6 @@ Reimplmentation of neural vocoder **"RNN_MS"** with PyTorch.
 5. Extract Mel spectrograms and preprocess audio:
   ```
   pipenv run python preprocess.py
-  ```
-
-6. Train the model:
-  ```
-  pipenv run python UniversalVocoding/train.py
   ```
   
 7. Generate:

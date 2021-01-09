@@ -4,46 +4,53 @@ import torch.nn as nn
 import torch.nn.functional as F
 from torchaudio.transforms import MuLawDecoding
 
+from .encoder import FakeGRU0, SpecEncoder
 from .decoder import C_eAR_GenRNN
+
 
 class RNN_MS_Vocoder(nn.Module):
     """RNN_MS: Universal Vocoder
     """
     def __init__(
         self,
-        dim_mel_freq: int,
+        size_mel_freq: int,
         size_latent: int,
-        size_embedding: int,
+        size_embed_ar: int,
         size_rnn_h: int,
         size_fc_h: int,
-        bits: int,
+        bits_mu_law: int,
         hop_length,
         nc:bool,
         device
     ):
-        """RNN_MS
+        """Set up the hyperparams.
 
         Args:
-            mel_channels: 
-            conditioning_channels: 
+            size_mel_freq: size of mel frequency dimension
+            size_latent: size of latent vector
+            size_embed_ar: size of embedded auto-regressive input vector (embedded output_t-1)
+            size_rnn_h: size of decoder's RNN hidden vector
+            size_fc_h: size of decoder's FC hidden layer
+            bits_mu_law: bit depth of μ-law encoding
+            hop_length:
             nc: If True, mel-spec conditioning is OFF
+            device:
         """
 
         super().__init__()
         self.rnn_channels = size_rnn_h
-        self.quantization_channels = 2**bits
         self.hop_length = hop_length
 
         # switch rrn1 based on uc flag
         if nc == True:
-            self.condNet = FakeGRU0(dim_mel_freq, size_latent, device, True)
+            self.condNet = FakeGRU0(size_mel_freq, size_latent, device, True)
             # output: (batch, seq_len, 2 * conditioning_channels), h_n
             print("--------- Mode: no mel-spec conditioning ---------")
         else:
-            self.condNet = SpecEncoder(dim_mel_freq, size_latent, hop_length)
+            self.condNet = SpecEncoder(size_mel_freq, size_latent, hop_length)
             # output: (batch, seq_len, 2 * conditioning_channels), h_n
-        self.decoder = C_eAR_GenRNN(size_latent, size_embedding, size_rnn_h, size_fc_h, 2**bits)
-        self.mulaw_dec = MuLawDecoding(2**bits)
+        self.decoder = C_eAR_GenRNN(size_latent, size_embed_ar, size_rnn_h, size_fc_h, 2**bits_mu_law)
+        self.mulaw_dec = MuLawDecoding(2**bits_mu_law)
 
     def forward(self, wave_mu_law: Tensor, mels: Tensor) -> Tensor:
         """Forward computation for training.

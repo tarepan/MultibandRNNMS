@@ -1,12 +1,12 @@
 from typing import Tuple
 
 from torch.tensor import Tensor
-import torch.nn as nn
 import torch.nn.functional as F
 from torch.optim import Adam
 from torch.optim.lr_scheduler import StepLR
 import pytorch_lightning as pl
 
+from .networks.vocoder import RNN_MS_Vocoder
 
 class RNN_MS(pl.LightningModule):
     """RNN_MS, universal neural vocoder.
@@ -16,38 +16,51 @@ class RNN_MS(pl.LightningModule):
         self,
         dim_mel_freq: int,
         dim_latent: int,
-        dim_embedding: int,
-        dim_rnn_hidden: int,
-        dim_out_fc1: int,
-        bits: int,
+        dim_embedding: int = 256,
+        dim_rnn_hidden: int = 896,
+        dim_out_fc1: int = 1024,
+        bits: int = 10,
+        sampling_rate: int = 16000,
         hop_length,
-        nc:bool,
+        nc: bool = False,
         device
     ):
+        """Set up and save the hyperparams.
+        """
         super().__init__()
 
         # params
         self.hparams = {
-            "learning_rate": 2.0 * 1e-4,
+            "learning_rate": 4.0 * 1e-4,
             "sampling_rate": sampling_rate,
-            "sched_decay_rate": "",
-            "sched_decay_step": ""
+            "sched_decay_rate": 0.5,
+            "sched_decay_step": 25000
         }
         self.save_hyperparameters()
 
-        self.rnnms = RNN_MS(dim_mel_freq, dim_latent, dim_embedding, dim_rnn_hidden, dim_out_fc1, bits, hop_length, hc, device)
+        self.rnnms = RNN_MS_Vocoder(
+            dim_mel_freq,
+            dim_latent,
+            dim_embedding,
+            dim_rnn_hidden,
+            dim_out_fc1,
+            bits,
+            hop_length,
+            nc,
+            device
+        )
 
-    def forward(self, x: Tensor, mels: Tensor) -> Tensor:
+    def forward(self, x: Tensor, mels: Tensor):
         pass
 
     def training_step(self, batch: Tuple[Tensor, Tensor], batch_idx: int, optimizer_idx: int):
         """Supervised learning.
         """
 
-        wave_ml, spec_mel = batch
+        wave_mu_law, spec_mel = batch
 
-        wave_ml_gen = self.rnnms(wave_ml[:, :-1], spec_mel)
-        loss = F.cross_entropy(wave_ml_gen.transpose(1, 2), wave_ml[:, 1:])
+        bits_evergy_sereis = self.rnnms(wave_mu_law[:, :-1], spec_mel)
+        loss = F.cross_entropy(bits_evergy_sereis.transpose(1, 2), wave_mu_law[:, 1:])
 
         return {"loss": loss}
 
@@ -55,9 +68,9 @@ class RNN_MS(pl.LightningModule):
         """Set up a optimizer
         """
 
-        optim = Adam(self.rnnms.parameters(), lr=params["vocoder"]["learning_rate"])
+        optim = Adam(self.rnnms.parameters(), lr=self.hparams["learning_rate"])
         sched = {
-            "scheduler": StepLR(optim, decay_iter, decay_rate),
+            "scheduler": StepLR(optim, self.hparams["sched_decay_step"], self.hparams["sched_decay_rate"]),
             "interval": "step",
         }
 

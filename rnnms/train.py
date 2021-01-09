@@ -1,6 +1,5 @@
 from argparse import Namespace
 from typing import Optional
-from model import RNN_MS_pl
 import os
 
 import numpy as np
@@ -12,8 +11,9 @@ from pytorch_lightning import loggers as pl_loggers
 from pytorch_lightning.callbacks import ModelCheckpoint
 from pytorch_lightning.core.datamodule import LightningDataModule
 
-from utils import save_wav
-from dataset import VocoderDataset
+from .utils import save_wav
+from .dataset import VocoderDataset
+from .model import RNN_MS
 
 
 def train_fn(args, params):
@@ -71,7 +71,7 @@ def train(args: Namespace, datamodule: LightningDataModule) -> None:
     ckptAndLogging = CheckpointAndLogging(args.dir_root, args.name_exp, args.name_version)
     # setup
     gpus: int = 1 if torch.cuda.is_available() else 0  # single GPU or CPU
-    model = RNN_MS_pl()
+    model = RNN_MS()
     ckpt_cb = ModelCheckpoint(period=60, save_last=True, save_top_k=1, monitor="val_loss")
     trainer = pl.Trainer(
         gpus=gpus,

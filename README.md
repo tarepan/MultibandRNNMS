@@ -52,8 +52,8 @@ Reimplmentation of neural vocoder **"RNN_MS"** with PyTorch.
 
 ## System details
 ### Model
-Encoder: 2-layer bidi-GRU (so that no time-directional compression)  
-Decoder: Simple AR  
+- Encoder: 2-layer bidi-GRU (so that no time-directional compression)  
+- Decoder: Latent-conditional, embedded-auto-regressive generative RNN with 10-bit μ-law encoding
 
 ## Pretrained Models
 Pretrained weights for the 9-bit model are available in [original repository](https://github.com/bshall/UniversalVocoding/releases/tag/v0.1).

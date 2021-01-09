@@ -23,11 +23,11 @@ if __name__ == "__main__":
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-    model = Vocoder(mel_channels=params["preprocessing"]["num_mels"],
-                    conditioning_channels=params["vocoder"]["conditioning_channels"],
-                    embedding_dim=params["vocoder"]["embedding_dim"],
-                    rnn_channels=params["vocoder"]["rnn_channels"],
-                    fc_channels=params["vocoder"]["fc_channels"],
+    model = Vocoder(dim_mel_freq=params["preprocessing"]["num_mels"],
+                    dim_latent=params["vocoder"]["conditioning_channels"],
+                    dim_embedding=params["vocoder"]["embedding_dim"],
+                    dim_rnn_hidden=params["vocoder"]["rnn_channels"],
+                    dim_out_fc1=params["vocoder"]["fc_channels"],
                     bits=params["preprocessing"]["bits"],
                     hop_length=params["preprocessing"]["hop_length"],
                     nc=args.nc,

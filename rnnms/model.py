@@ -14,19 +14,18 @@ class RNN_MS(pl.LightningModule):
 
     def __init__(
         self,
-        dim_mel_freq: int,
-        dim_latent: int,
-        dim_embedding: int = 256,
-        dim_rnn_hidden: int = 896,
-        dim_out_fc1: int = 1024,
-        bits: int = 10,
+        size_mel_freq: int = 80,
+        hop_length: int = 200,
         sampling_rate: int = 16000,
-        hop_length,
-        nc: bool = False,
-        device
+        size_latent: int = 128,
+        size_embed_ar: int = 256,
+        size_rnn_h: int = 896,
+        size_fc_h: int = 1024,
+        bits_mu_law: int = 10,
     ):
         """Set up and save the hyperparams.
         """
+
         super().__init__()
 
         # params
@@ -39,15 +38,13 @@ class RNN_MS(pl.LightningModule):
         self.save_hyperparameters()
 
         self.rnnms = RNN_MS_Vocoder(
-            dim_mel_freq,
-            dim_latent,
-            dim_embedding,
-            dim_rnn_hidden,
-            dim_out_fc1,
-            bits,
+            size_mel_freq,
+            size_latent,
+            size_embed_ar,
+            size_rnn_h,
+            size_fc_h,
+            bits_mu_law,
             hop_length,
-            nc,
-            device
         )
 
     def forward(self, x: Tensor, mels: Tensor):

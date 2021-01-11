@@ -4,7 +4,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 from torchaudio.transforms import MuLawDecoding
 
-from .encoder import FakeGRU0, SpecEncoder
+from .encoder import SpecEncoder
 from .decoder import C_eAR_GenRNN
 
 
@@ -19,9 +19,7 @@ class RNN_MS_Vocoder(nn.Module):
         size_rnn_h: int,
         size_fc_h: int,
         bits_mu_law: int,
-        hop_length,
-        nc:bool,
-        device
+        hop_length: int,
     ):
         """Set up the hyperparams.
 
@@ -32,23 +30,13 @@ class RNN_MS_Vocoder(nn.Module):
             size_rnn_h: size of decoder's RNN hidden vector
             size_fc_h: size of decoder's FC hidden layer
             bits_mu_law: bit depth of μ-law encoding
-            hop_length:
-            nc: If True, mel-spec conditioning is OFF
-            device:
+            hop_length: STFT stride
         """
 
         super().__init__()
-        self.rnn_channels = size_rnn_h
         self.hop_length = hop_length
 
-        # switch rrn1 based on uc flag
-        if nc == True:
-            self.condNet = FakeGRU0(size_mel_freq, size_latent, device, True)
-            # output: (batch, seq_len, 2 * conditioning_channels), h_n
-            print("--------- Mode: no mel-spec conditioning ---------")
-        else:
-            self.condNet = SpecEncoder(size_mel_freq, size_latent, hop_length)
-            # output: (batch, seq_len, 2 * conditioning_channels), h_n
+        self.encoder = SpecEncoder(size_mel_freq, size_latent, hop_length)
         self.decoder = C_eAR_GenRNN(size_latent, size_embed_ar, size_rnn_h, size_fc_h, 2**bits_mu_law)
         self.mulaw_dec = MuLawDecoding(2**bits_mu_law)
 
@@ -63,9 +51,11 @@ class RNN_MS_Vocoder(nn.Module):
             Tensor(Batch, Time, before_softmax) Generated mu-law encoded waveform
         """
         # Encoding for conditioning
-        latents = self.condNet(wave_mu_law, mels)
+        # Tensor(batch, T_mel, 2*size_latent)
+        latents: Tensor = self.encoder(wave_mu_law, mels)
 
         # Cond. Upsampling
+        # Tensor(batch, T_mel*hop_length, 2*size_latent)
         latents = F.interpolate(latents.transpose(1, 2), scale_factor=self.hop_length)
         latents = latents.transpose(1, 2)
 
@@ -74,11 +64,12 @@ class RNN_MS_Vocoder(nn.Module):
 
         return wave_mu_law
 
-    def generate(self, mel):
+    def generate(self, mel: Tensor):
         self.eval()
+
         with torch.no_grad():
             # Encoding for conditioning
-            latents = self.condNet.generate(mel)
+            latents = self.encoder.generate(mel)
 
             # Cond. Upsampling
             latents = F.interpolate(latents.transpose(1, 2), scale_factor=self.hop_length)
@@ -87,5 +78,6 @@ class RNN_MS_Vocoder(nn.Module):
             # Autoregressive
             output_mu_law = self.decoder.generate(latents)
             output = self.mulaw_dec(output_mu_law)
+
         self.train()
         return output

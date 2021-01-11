@@ -23,19 +23,14 @@ class RNN_MS(pl.LightningModule):
         size_rnn_h: int = 896,
         size_fc_h: int = 1024,
         bits_mu_law: int = 10,
+        learning_rate: float = 4.0 * 1e-4,
+        sched_decay_rate: float = 0.5,
+        sched_decay_step: int = 25000,
     ):
         """Set up and save the hyperparams.
         """
 
         super().__init__()
-
-        # params
-        self.hparams = {
-            "learning_rate": 4.0 * 1e-4,
-            "sampling_rate": sampling_rate,
-            "sched_decay_rate": 0.5,
-            "sched_decay_step": 25000
-        }
         self.save_hyperparameters()
 
         self.rnnms = RNN_MS_Vocoder(
@@ -66,9 +61,9 @@ class RNN_MS(pl.LightningModule):
         """Set up a optimizer
         """
 
-        optim = Adam(self.rnnms.parameters(), lr=self.hparams["learning_rate"])
+        optim = Adam(self.rnnms.parameters(), lr=self.hparams.learning_rate)
         sched = {
-            "scheduler": StepLR(optim, self.hparams["sched_decay_step"], self.hparams["sched_decay_rate"]),
+            "scheduler": StepLR(optim, self.hparams.sched_decay_step, self.hparams.sched_decay_rate),
             "interval": "step",
         }
 

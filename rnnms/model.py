@@ -8,6 +8,7 @@ import pytorch_lightning as pl
 
 from .networks.vocoder import RNN_MS_Vocoder
 
+
 class RNN_MS(pl.LightningModule):
     """RNN_MS, universal neural vocoder.
     """

@@ -18,6 +18,8 @@ class C_eAR_GenRNN(nn.Module):
 
     conditioning latent + embeded sample_t-1 -> (RNN) -> (FC) -->
       --> output Energy vector -> (softmax) -> (sampling) -> sample_t
+
+    Alternative implementation: embedding => one-hot
     """
 
     def __init__(self, size_i_cnd: int, size_i_embed_ar: int, size_h_rnn: int, size_h_fc: int, size_o: int) -> None:
@@ -25,7 +27,7 @@ class C_eAR_GenRNN(nn.Module):
 
         Args:
             size_i_cnd: size of conditioning input vector
-            size_i_embed_ar: size of embedded auto-regressive input vector (embedded output_t-1)
+            size_i_embed_ar: size of embedded auto-regressive input vector (embedded sample_t-1)
             size_h_rnn: size of RNN hidden vector
             size_h_fc: size of 2-layer FC's hidden layer
             size_o: size of output energy vector

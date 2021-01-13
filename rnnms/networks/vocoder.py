@@ -1,10 +1,8 @@
-import torch
 from torch.tensor import Tensor
 import torch.nn as nn
 import torch.nn.functional as F
 from torchaudio.transforms import MuLawDecoding
 
-from .encoder import SpecEncoder
 from .decoder import C_eAR_GenRNN
 
 
@@ -26,7 +24,7 @@ class RNN_MS_Vocoder(nn.Module):
         Args:
             size_mel_freq: size of mel frequency dimension
             size_latent: size of latent vector
-            size_embed_ar: size of embedded auto-regressive input vector (embedded output_t-1)
+            size_embed_ar: size of embedded auto-regressive input vector (embedded sample_t-1)
             size_rnn_h: size of decoder's RNN hidden vector
             size_fc_h: size of decoder's FC hidden layer
             bits_mu_law: bit depth of μ-law encoding
@@ -36,7 +34,7 @@ class RNN_MS_Vocoder(nn.Module):
         super().__init__()
         self.hop_length = hop_length
 
-        self.encoder = SpecEncoder(size_mel_freq, size_latent, hop_length)
+        self.encoder = nn.GRU(size_mel_freq, size_latent, num_layers=2, batch_first=True, bidirectional=True)
         self.decoder = C_eAR_GenRNN(size_latent, size_embed_ar, size_rnn_h, size_fc_h, 2**bits_mu_law)
         self.mulaw_dec = MuLawDecoding(2**bits_mu_law)
 
@@ -52,7 +50,7 @@ class RNN_MS_Vocoder(nn.Module):
         """
         # Encoding for conditioning
         # Tensor(batch, T_mel, 2*size_latent)
-        latents: Tensor = self.encoder(wave_mu_law, mels)
+        latents, _ = self.encoder(mels)
 
         # Cond. Upsampling
         # Tensor(batch, T_mel*hop_length, 2*size_latent)
@@ -60,24 +58,36 @@ class RNN_MS_Vocoder(nn.Module):
         latents = latents.transpose(1, 2)
 
         # Autoregressive
-        wave_mu_law = self.decoder(wave_mu_law, latents)
+        bits_energy_series = self.decoder(wave_mu_law, latents)
 
-        return wave_mu_law
+        return bits_energy_series
 
     def generate(self, mel: Tensor):
-        self.eval()
+        # Encoding for conditioning
+        latents, _ = self.encoder(mel)
 
-        with torch.no_grad():
-            # Encoding for conditioning
-            latents = self.encoder.generate(mel)
+        # Cond. Upsampling
+        latents = F.interpolate(latents.transpose(1, 2), scale_factor=self.hop_length)
+        latents = latents.transpose(1, 2)
 
-            # Cond. Upsampling
-            latents = F.interpolate(latents.transpose(1, 2), scale_factor=self.hop_length)
-            latents = latents.transpose(1, 2)
+        # Autoregressive
+        output_mu_law = self.decoder.generate(latents)
+        output = self.mulaw_dec(output_mu_law)
 
-            # Autoregressive
-            output_mu_law = self.decoder.generate(latents)
-            output = self.mulaw_dec(output_mu_law)
-
-        self.train()
         return output
+
+
+def clip_time_center(input: Tensor, ref: Tensor, scale_factor: int):
+    """Clip input with aligned reference.
+
+    Time scale -- `scale_factor` sample of ref == 1 sample of input
+
+    ref:        .................................         (33 point = 6.6 input unit)
+    input: .    .    .    .    .    .    .    .    .    . (10 unit)
+    output:          .    .    .    .    .    .
+    """
+
+    size_t_input = input.size(1)
+    size_t_ref_w_input_unit = ref.size(1) // scale_factor
+    pad = (size_t_input - size_t_ref_w_input_unit) // 2
+    return input[:, pad:pad + size_t_ref_w_input_unit, :]

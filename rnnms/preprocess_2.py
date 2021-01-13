@@ -30,6 +30,8 @@ def melspectrogram(
 
     n_fft (2048) >> win_length (800), so information is came from only center of bin (1/4 overlap).
 
+    No clipping in this processing.
+
     Args:
         wav: waveform
         sr: sampling rate of `wav`
@@ -57,15 +59,23 @@ def melspectrogram(
 def mu_compress(wav, hop_length=200, frame_length=800, bits_mu_law=8):
     """μ-law compression with librosa.
 
-    m bits waveform => bits_mu_law bits μ-law encoded waveform.     
+    m bits waveform => bits_mu_law bits μ-law encoded waveform.
+
+    Some clipping seems to occur in this processing.
+
 
     Args:
         hop_length: STFT stride
 
         ((wav.shape[0] - frame_length) // hop_length) * hop_length + hop_length 
         frame_length...?
+        rough aproximation
+        wav.shape[0] - frame_length + hop_length
     """
+    # Pad for STFT (frame_length==window_length)
+    # Pad both side of waveform. Pad length is full cover of STFT (window_length//2).
     wav = np.pad(wav, (frame_length // 2,), mode="reflect")
+    # Clip for Mel-wave shape match
     wav = wav[: ((wav.shape[0] - frame_length) // hop_length + 1) * hop_length]
     wav = 2 ** (bits_mu_law - 1) + librosa.mu_compress(wav, mu=2 ** bits_mu_law - 1)
     return wav
@@ -118,6 +128,7 @@ def process_wav(wav_path, out_path, cfg):
 
 @hydra.main(config_path="univoc/config", config_name="preprocess")
 def preprocess_dataset(cfg):
+    # Prepare dirs
     in_dir = Path(utils.to_absolute_path(cfg.in_dir))
     out_dir = Path(utils.to_absolute_path(cfg.out_dir))
     out_dir.mkdir(parents=True, exist_ok=True)
@@ -132,6 +143,7 @@ def preprocess_dataset(cfg):
             wav_path = in_dir / in_path
             out_path = out_dir / out_path
             out_path.parent.mkdir(parents=True, exist_ok=True)
+            # Register preprocessing jobs in parallel
             futures.append(
                 executor.submit(process_wav, wav_path, out_path, cfg.preprocess)
             )
@@ -139,9 +151,11 @@ def preprocess_dataset(cfg):
     results = [future.result() for future in tqdm(futures)]
 
     lengths = {result[0].stem: result[1] for result in results}
+    # Record output overview (path, length)
     with open(out_dir / "lengths.json", "w") as file:
         json.dump(lengths, file, indent=4)
 
+    # Logging
     frames = sum(lengths.values())
     frame_shift_ms = cfg.preprocess.hop_length / cfg.preprocess.sr
     hours = frames * frame_shift_ms / 3600

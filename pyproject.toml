@@ -17,6 +17,7 @@ numpy = "^1.16"
 scipy = "^1.2"
 librosa = "0.6.3"
 tqdm = "*"
+corpuspy = {git = "https://github.com/tarepan/corpuspy.git", rev = "main"}
 
 [tool.poetry.dev-dependencies]
 

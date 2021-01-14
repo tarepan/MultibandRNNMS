@@ -36,10 +36,14 @@ For arguments, please check ./scyclonepytorch/args.py
 - Upsampler: x200 time-directional latent upsampling with interpolation
 - Decoder: Latent-conditional, embedded-auto-regressive generative RNN with 10-bit μ-law encoding
 
-## Notable Differences from the Paper
-1. Trained on 16kHz audio from 102 different speakers ([ZeroSpeech 2019: TTS without T](https://zerospeech.com/2019/) English dataset)
-2. Uses an embedding layer instead of one-hot encoding
-3. Default automatic mixed-precision ON (2x speed-up)
+## Differences from the Paper
+
+| property      |  paper           | this repo       |
+|:--------------|:-----------------|:----------------|
+| sampling rate | 24 kHz           |   16 kHz        |
+| AR input      | one-hot          | embedding       |
+| Dataset       | internal? 74 spk | LJSpeech, 1 spk |
+| Presicion     |   -              | 32/16 Mixed     |
 
 ## Informative Results
 ### Mixed-Precision

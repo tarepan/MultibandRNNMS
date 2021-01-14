@@ -17,61 +17,37 @@ Reimplmentation of neural vocoder **"RNN_MS"** with PyTorch.
 ### Quick training <!-- omit in toc -->
 [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)][notebook]
 
-### Train
 ### Install
 
-1. Prepare `rnnms`
-
 ```bash
-!pip install git+https://github.com/tarepan/UniversalVocoding -q
+!pip install git+https://github.com/tarepan/UniversalVocoding#main -q
 ```
 
-2. Preprocess corpus as dataset
-
-
-3. Run training
-
+### Training
 ```bash
-!python -m rnnms.main_train --num_workers=0 "--dir_root=gdrive/My Drive/ML_results" "--name_exp=rnnms" "--name_version=version_0" "--adress_data_root=gdrive/My Drive/ML_data"
+!python -m rnnms.main_train
 ```
 
-4. Download and extract ZeroSpeech2019 TTS without the T English dataset:
-  ```
-  wget https://download.zerospeech.com/2019/english.tgz
-  tar -xvzf english.tgz
-  ```
-5. Extract Mel spectrograms and preprocess audio:
-  ```
-  pipenv run python preprocess.py
-  ```
-  
-7. Generate:
-  ```
-  pipenv run python generate.py --checkpoint=/path/to/checkpoint.pt --wav-path=/path/to/wav.wav
-  ```
+For arguments, please check ./scyclonepytorch/args.py
 
 ## System details
 ### Model
-- Encoder: 2-layer bidi-GRU (so that no time-directional compression)  
+- Encoder: 2-layer bidi-GRU (so that no time-directional compression)
+- Upsampler: x200 time-directional latent upsampling with interpolation
 - Decoder: Latent-conditional, embedded-auto-regressive generative RNN with 10-bit μ-law encoding
-
-## Pretrained Models
-Pretrained weights for the 9-bit model are available in [original repository](https://github.com/bshall/UniversalVocoding/releases/tag/v0.1).
 
 ## Notable Differences from the Paper
 1. Trained on 16kHz audio from 102 different speakers ([ZeroSpeech 2019: TTS without T](https://zerospeech.com/2019/) English dataset)
-2. The model generates 9-bit mu-law audio (planning on training a 10-bit model soon)
-3. Uses an embedding layer instead of one-hot encoding
-4. Default automatic mixed-precision ON (2x speed-up)
+2. Uses an embedding layer instead of one-hot encoding
+3. Default automatic mixed-precision ON (2x speed-up)
 
 ## Informative Results
 ### Mixed-Precision
 Google Colaboratory Tesla T4  
 default configs  
-(tag + settings)
 
-* w/o apex : 2.04it/s (exp_woApex), 2.02it/s (exp_wApex + "no")  
-* w/  apex : 3.76it/s (exp_wApex + "O1"), 2.30it/s (exp_wApex + "O2"), 3.68it/s (exp_wApex + "O3")
+* w/o AMP : x.xxit/s
+* w/  AMP : x.xxit/s
 
 ## Knowledge from Original Repository
 - training speed [issue#5](https://github.com/bshall/UniversalVocoding/issues/5)
@@ -89,6 +65,7 @@ default configs
 
 ## Acknowlegements
 - https://github.com/fatchord/WaveRNN
+- https://github.com/bshall/UniversalVocoding
 
 ## Original paper
 [![Paper](http://img.shields.io/badge/paper-arxiv.1811.06292-B31B1B.svg)][paper]  
@@ -101,11 +78,6 @@ Year = {2018},
 Eprint = {arXiv:1811.06292},
 }
 ```
-
-## Development notes
-### apex install
-pipenv (pipfile) cannot handle "pip install" options.  
-apex needs options, so determined to manual install.  
 
 ## Dependency Notes
 ### PyTorch version <!-- omit in toc -->

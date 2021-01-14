@@ -58,10 +58,8 @@ For arguments, check [./rnnms/args.py](https://github.com/tarepan/UniversalVocod
 
 ## Results
 ### Performance <!-- omit in toc -->
-Google Colaboratory Tesla T4  
---num_workers=8 (same as bshall)  
-
-1.1 it/s (c.f. bshall/UniversalVocoding 1.1 it/s with AMP)  
+1.1 [iter/sec] @ NVIDIA T4 Google Colaboratory (AMP+, num_workers=8)  
+(1.1 [iter/sec] with [bshall/UniversalVocoding], same setup)  
 
 ### Knowledge from Original Repository <!-- omit in toc -->
 - training speed

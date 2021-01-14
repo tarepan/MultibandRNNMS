@@ -95,4 +95,4 @@ In order to resolve this problem, we use `torch==*`, it is equal to no version s
 `Setup.py` could resolve this problem (e.g. `torchaudio`'s `setup.py`), but we will not bet our effort to this hacky method.  
 
 [paper]:https://arxiv.org/abs/1811.06292
-[notebook]:https://colab.research.google.com/github/tarepan/UniversalVocoding/blob/main/UniversalVocoding.ipynb
+[notebook]:https://colab.research.google.com/github/tarepan/UniversalVocoding/blob/main/rnnms.ipynb

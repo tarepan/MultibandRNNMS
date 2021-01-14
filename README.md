@@ -48,10 +48,9 @@ For arguments, please check ./scyclonepytorch/args.py
 ## Informative Results
 ### Mixed-Precision
 Google Colaboratory Tesla T4  
-default configs  
+--num_workers=8 (same as bshall)  
 
-* w/o AMP : x.xxit/s
-* w/  AMP : x.xxit/s
+1.1 it/s (c.f. bshall/UniversalVocoding 1.1 it/s with AMP)  
 
 ## Knowledge from Original Repository
 - training speed [issue#5](https://github.com/bshall/UniversalVocoding/issues/5)

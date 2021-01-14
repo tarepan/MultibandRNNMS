@@ -41,10 +41,10 @@ def train(args: Namespace, datamodule: LightningDataModule) -> None:
         # logging/checkpointing
         resume_from_checkpoint=ckptAndLogging.resume_from_checkpoint,
         default_root_dir=ckptAndLogging.default_root_dir,
-        checkpoint_callback=ckpt_cb,
         logger=pl_loggers.TensorBoardLogger(
             ckptAndLogging.save_dir, ckptAndLogging.name, ckptAndLogging.version
         ),
+        callbacks=[ckpt_cb],
         # reload_dataloaders_every_epoch=True,
         profiler=args.profiler,
         progress_bar_refresh_rate=30

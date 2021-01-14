@@ -102,14 +102,14 @@ class LJSpeech_mel_mulaw(Dataset):
         # Tensor(T_mel * hop_length,)
         mulaw: Tensor = load(get_dataset_mulaw_path(self._path_contents_local, id))
 
-        # Random clipping
-        start = random.randint(0, mel.size()[-1] - self._clip_length_mel - 1)
+        # Time-directional random clipping
+        start = random.randint(0, mel.size()[-2] - self._clip_length_mel - 1)
 
         # Mel-spectrogram clipping
         start_mel = start
         end_mel = start + self._clip_length_mel
         # (T_mel, freq) -> (clip_length_mel, freq)
-        mel_clipped = mel[:, start_mel : end_mel]
+        mel_clipped = mel[start_mel : end_mel]
 
         # Waveform clipping
         start_mulaw = self._mel_stft_hop_length * start_mel
@@ -117,7 +117,7 @@ class LJSpeech_mel_mulaw(Dataset):
         # (T_mel * hop_length,) -> (clip_length_mel * hop_length,)
         mulaw_clipped = mulaw[start_mulaw : end_mulaw]
 
-        return (mulaw_clipped, mel_clipped)
+        return mulaw_clipped, mel_clipped
 
     def __getitem__(self, n: int) -> Tuple[Tensor, Tensor]:
         """Load the n-th sample from the dataset.

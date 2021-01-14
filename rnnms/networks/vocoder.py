@@ -75,19 +75,3 @@ class RNN_MS_Vocoder(nn.Module):
         output = self.mulaw_dec(output_mu_law)
 
         return output
-
-
-def clip_time_center(input: Tensor, ref: Tensor, scale_factor: int):
-    """Clip input with aligned reference.
-
-    Time scale -- `scale_factor` sample of ref == 1 sample of input
-
-    ref:        .................................         (33 point = 6.6 input unit)
-    input: .    .    .    .    .    .    .    .    .    . (10 unit)
-    output:          .    .    .    .    .    .
-    """
-
-    size_t_input = input.size(1)
-    size_t_ref_w_input_unit = ref.size(1) // scale_factor
-    pad = (size_t_input - size_t_ref_w_input_unit) // 2
-    return input[:, pad:pad + size_t_ref_w_input_unit, :]

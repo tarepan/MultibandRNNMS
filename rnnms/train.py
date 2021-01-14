@@ -2,67 +2,26 @@ from argparse import Namespace
 from typing import Optional
 import os
 
-import numpy as np
 import torch
-from torch.utils.data import DataLoader
-from torchaudio.functional import mu_law_decoding
 import pytorch_lightning as pl
 from pytorch_lightning import loggers as pl_loggers
 from pytorch_lightning.callbacks import ModelCheckpoint
 from pytorch_lightning.core.datamodule import LightningDataModule
 
-from .utils import save_wav
-from .dataset import VocoderDataset
 from .model import RNN_MS
 
 
-def train_fn(args, params):
-    train_dataset = VocoderDataset(meta_file=os.path.join(args.data_dir, "train.txt"),
-                                   sample_frames=params["vocoder"]["sample_frames"],
-                                   audio_slice_frames=params["vocoder"]["audio_slice_frames"],
-                                   hop_length=params["preprocessing"]["hop_length"],
-                                   bits=params["preprocessing"]["bits"])
-
-    # -- matched with origin
-    train_dataloader = DataLoader(train_dataset, batch_size=params["vocoder"]["batch_size"],
-                                  shuffle=True, num_workers=1,
-                                  pin_memory=True, drop_last=True)
-    # --
-
-    # -- looks good. can be transplanted.
-    # Add original utterance to TensorBoard
-    if args.resume is None:
-        with open(os.path.join(args.data_dir, "test.txt"), encoding="utf-8") as f:
-            test_wavnpy_paths = [line.strip().split("|")[1] for line in f]
-        for index, wavnpy_path in enumerate(test_wavnpy_paths):
-            muraw_code = torch.from_numpy(np.load(wavnpy_path))
-            wav_pth = mu_law_decoding(muraw_code, 2**params["preprocessing"]["bits"])
-            writer.add_audio("orig", wav_pth, global_step=global_step, sample_rate=params["preprocessing"]["sample_rate"])
-            break
-    # --
-
-    # epoch loop
-    for epoch in range(start_epoch, num_epochs + 1):
-        running_loss = 0
-        
-        # step loop
-        for i, (audio, mels) in enumerate(tqdm(train_dataloader, leave=False), 1):
-            audio, mels = audio.to(device), mels.to(device)
-
-            if global_step % params["vocoder"]["generation_interval"] == 0:
-                with open(os.path.join(args.data_dir, "test.txt"), encoding="utf-8") as f:
-                    test_mel_paths = [line.strip().split("|")[2] for line in f]
-
-                for index, mel_path in enumerate(test_mel_paths):
-                    utterance_id = os.path.basename(mel_path).split(".")[0]
-                    # unsqueeze: insert in a batch
-                    mel = torch.FloatTensor(np.load(mel_path)).unsqueeze(0).to(device)
-                    output = np.asarray(model.generate(mel), dtype=np.float64)
-                    path = exp_dir/"samples"/f"gen_{utterance_id}_model_steps_{global_step}.wav"
-                    save_wav(str(path), output, params["preprocessing"]["sample_rate"])
-                    if index == 0:
-                        writer.add_audio("cnvt", torch.from_numpy(output), global_step=global_step, sample_rate=params["preprocessing"]["sample_rate"])
-
+# # -- looks good. can be transplanted.
+# # Add original utterance to TensorBoard
+# if args.resume is None:
+#     with open(os.path.join(args.data_dir, "test.txt"), encoding="utf-8") as f:
+#         test_wavnpy_paths = [line.strip().split("|")[1] for line in f]
+#     for index, wavnpy_path in enumerate(test_wavnpy_paths):
+#         muraw_code = torch.from_numpy(np.load(wavnpy_path))
+#         wav_pth = mu_law_decoding(muraw_code, 2**params["preprocessing"]["bits"])
+#         writer.add_audio("orig", wav_pth, global_step=global_step, sample_rate=params["preprocessing"]["sample_rate"])
+#         break
+# # --
 
 def train(args: Namespace, datamodule: LightningDataModule) -> None:
     """Train RNN_MS on PyTorch-Lightning.

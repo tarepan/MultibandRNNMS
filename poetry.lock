@@ -379,6 +379,19 @@ python-versions = "*"
 pyasn1 = ">=0.4.6,<0.5.0"
 
 [[package]]
+name = "pyloudnorm"
+version = "0.1.0"
+description = "Implementation of ITU-R BS.1770-4 loudness algorithm in Python"
+category = "main"
+optional = false
+python-versions = "*"
+
+[package.dependencies]
+future = ">=0.16.0"
+numpy = ">=1.14.2"
+scipy = ">=1.0.1"
+
+[[package]]
 name = "python-dateutil"
 version = "2.8.1"
 description = "Extensions to the standard Python datetime module"
@@ -683,7 +696,7 @@ testing = ["pytest (>=3.5,!=3.7.3)", "pytest-checkdocs (>=1.2.3)", "pytest-flake
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.6.1"
-content-hash = "c3ede7c8404ca5c6cd64d58cc620345936934ce0b2363038f5225fe61af4bcb7"
+content-hash = "156164fb4e62b3ff31d83677d25e20cbcc7b5bef6e6797e44175932ec9d89675"
 
 [metadata.files]
 absl-py = [
@@ -1002,6 +1015,11 @@ pyasn1-modules = [
     {file = "pyasn1_modules-0.2.8-py3.5.egg", hash = "sha256:426edb7a5e8879f1ec54a1864f16b882c2837bfd06eee62f2c982315ee2473ed"},
     {file = "pyasn1_modules-0.2.8-py3.6.egg", hash = "sha256:cbac4bc38d117f2a49aeedec4407d23e8866ea4ac27ff2cf7fb3e5b570df19e0"},
     {file = "pyasn1_modules-0.2.8-py3.7.egg", hash = "sha256:c29a5e5cc7a3f05926aff34e097e84f8589cd790ce0ed41b67aed6857b26aafd"},
+]
+pyloudnorm = [
+    {file = "pyloudnorm-0.1.0-py2-none-any.whl", hash = "sha256:82230b8bcbb3c55bed4e32b245707eaca7eeda188b89b8cac82d1c87a14bd4bb"},
+    {file = "pyloudnorm-0.1.0-py3-none-any.whl", hash = "sha256:d4ebefec5249ff439d684e3fe4c897239e98d8a554a974847d37f1123b90cb81"},
+    {file = "pyloudnorm-0.1.0.tar.gz", hash = "sha256:97c37054cbb0bdc8b52b3e280366a71e0db206e25d0b48d8cfe848d40b376d73"},
 ]
 python-dateutil = [
     {file = "python-dateutil-2.8.1.tar.gz", hash = "sha256:73ebfe9dbf22e832286dafa60473e4cd239f8592f699aa5adaf10050e6e1823c"},

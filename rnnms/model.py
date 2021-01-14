@@ -15,6 +15,7 @@ class RNN_MS(pl.LightningModule):
 
     def __init__(
         self,
+        # Hardcoded hyperparams
         size_mel_freq: int = 80,
         hop_length: int = 200,
         sampling_rate: int = 16000,

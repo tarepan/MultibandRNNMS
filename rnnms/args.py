@@ -15,7 +15,6 @@ def parseArgments(
     parser.add_argument("--name_version", default="version_-1", type=str)
     #
     parser.add_argument("--max_epochs", default=400000, type=int)
-    parser.add_argument("--sampling_rate", default=16000, type=int)
     parser.add_argument("--no_amp", action="store_true")
     parser.add_argument("--val_interval_epoch", default=50, type=int)
     parser.add_argument("--adress_data_root", type=str)

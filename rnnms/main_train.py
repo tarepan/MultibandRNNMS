@@ -3,7 +3,7 @@ from argparse import ArgumentParser
 import pytorch_lightning
 
 from .args import parseArgments
-from .datamodule import DataLoaderPerformance, NonParallelSpecDataModule
+from .data.datamodule import DataLoaderPerformance, LJSpeechDataModule
 from .train import train
 
 
@@ -11,8 +11,12 @@ def main_train():
     """Train rnnms with cli arguments and the default dataset.
     """
 
+    # Hardcoded hyperparams
+    batch_size = 32
+    seed = 1234
+
     # Random seed
-    pytorch_lightning.seed_everything(1234)
+    pytorch_lightning.seed_everything(seed)
 
     # Args
     parser = ArgumentParser()
@@ -20,7 +24,7 @@ def main_train():
 
     # Datamodule
     loader_perf = DataLoaderPerformance(args_scpt.num_workers, not args_scpt.no_pin_memory)
-    datamodule = NonParallelSpecDataModule(args_scpt.sampling_rate, 64, loader_perf, args_scpt.adress_data_root)
+    datamodule = LJSpeechDataModule(batch_size, performance=loader_perf, adress_data_root=args_scpt.adress_data_root)
 
     # Train
     train(args_scpt, datamodule)

@@ -18,6 +18,7 @@ scipy = "^1.2"
 librosa = "0.6.3"
 tqdm = "*"
 corpuspy = {git = "https://github.com/tarepan/corpuspy.git", rev = "main"}
+pyloudnorm = "^0.1.0"
 
 [tool.poetry.dev-dependencies]
 

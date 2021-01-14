@@ -68,4 +68,7 @@ class RNN_MS(pl.LightningModule):
             "interval": "step",
         }
 
-        return [optim], [sched]
+        return {
+            "optimizer": optim,
+            "lr_scheduler": sched,
+        }

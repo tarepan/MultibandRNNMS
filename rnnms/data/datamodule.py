@@ -45,14 +45,14 @@ class LJSpeechDataModule(LightningDataModule):
         self._num_worker = performance.num_workers
         self._pin_memory = performance.pin_memory
 
-        self._adress_dir_corpuses = f"{adress_data_root}/corpuses" if adress_data_root else None
+        self._adress_corpuses = f"{adress_data_root}/corpuses/LJSpeech-1.1.tar.bz2" if adress_data_root else None
         self._adress_dir_datasets = f"{adress_data_root}/datasets" if adress_data_root else None
 
     def prepare_data(self, *args, **kwargs) -> None:
         LJSpeech_mel_mulaw(
             train=True,
             download_corpus=True,
-            corpus_adress=self._adress_dir_corpuses,
+            corpus_adress=self._adress_corpuses,
             dataset_dir_adress=self._adress_dir_datasets,
         )
 
@@ -61,7 +61,7 @@ class LJSpeechDataModule(LightningDataModule):
             dataset_full = LJSpeech_mel_mulaw(
                 train=True,
                 download_corpus=True,
-                corpus_adress=self._adress_dir_corpuses,
+                corpus_adress=self._adress_corpuses,
                 dataset_dir_adress=self._adress_dir_datasets,
             )
 
@@ -76,7 +76,7 @@ class LJSpeechDataModule(LightningDataModule):
             self.dataset_test = LJSpeech_mel_mulaw(
                 train=False,
                 download_corpus=True,
-                corpus_adress=self._adress_dir_corpuses,
+                corpus_adress=self._adress_corpuses,
                 dataset_dir_adress=self._adress_dir_datasets,
             )
             self.batch_size_test = self.batch_size

@@ -92,7 +92,7 @@ class LJSpeech(AbstractCorpus[ItemIdLJSpeech]):
         root = str(self._path_contents_local)
         group = str(id.serial_num).zfill(3)
         num = str(id.serial_num).zfill(4)
-        p = f"{root}/wavs/LJ{group}-{num}.wav"
+        p = f"{root}/{self._corpus_name}/wavs/LJ{group}-{num}.wav"
         return Path(p)
 
 

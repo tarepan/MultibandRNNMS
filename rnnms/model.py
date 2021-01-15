@@ -44,8 +44,8 @@ class RNN_MS(pl.LightningModule):
             hop_length,
         )
 
-    def forward(self, x: Tensor, mels: Tensor):
-        pass
+    def forward(self, _: Tensor, mels: Tensor):
+        return self.rnnms.generate(mels)
 
     def training_step(self, batch: Tuple[Tensor, Tensor], batch_idx: int):
         """Supervised learning.

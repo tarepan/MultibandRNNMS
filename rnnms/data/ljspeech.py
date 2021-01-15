@@ -61,6 +61,11 @@ class LJSpeech(AbstractCorpus[ItemIdLJSpeech]):
             Full item identity list.
         """
 
+        # Design notes:
+        #   No contents dependency is intentional.
+        #   Corpus handler can be used without corpus itself (e.g. Get item identities for a preprocessed dataset).
+        #   Hard-coded identity list enable contents-independent identity acquisition.
+
         maxes: List[int] = [186, 338, 349, 250, 300, 308, 243, 319, 304, 317, 293, 296, 268, 340, 314, 446, 284, 398, 399, 108, 210,
             203, 141, 143, 176, 166, 180, 519, 213, 255, 233, 275, 214, 219, 210, 218, 269, 306, 248, 240, 203, 251, 188,
             239, 250, 254, 250, 289, 230, 278]

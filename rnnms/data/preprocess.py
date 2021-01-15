@@ -57,14 +57,19 @@ def mu_compress(wave: np.ndarray, bits_mu_law: int, stft_hop_length: int, stft_w
         bits_mu_law: μ-law compressed waveform's bit depth
         stft_hop_length: STFT stride
         stft_win_length: STFT window length
+    Returns:
+        μ-law encoded waveform, each sample point is int and in range [0, 2^bit - 1]
     """
 
     # Pad both side of waveform. Pad length is full cover of STFT (stft_win_length//2).
     wave = np.pad(wave, (stft_win_length // 2,), mode="reflect")
+
     # Clip for Mel-wave shape match
     wave = wave[: ((wave.shape[0] - stft_win_length) // stft_hop_length + 1) * stft_hop_length]
-    wave = 2 ** (bits_mu_law - 1) + librosa.mu_compress(wave, mu=2 ** bits_mu_law - 1)
-    return wave
+
+    # Range adaption from librosa to Categorical : [-2^(bit-1), 2^(bit-1)-1] -> [0, 2^bit - 1]
+    mu_law: np.ndarray = 2 ** (bits_mu_law - 1) + librosa.mu_compress(wave, mu=2 ** bits_mu_law - 1)
+    return mu_law
 
 
 def preprocess_mel_mulaw(
@@ -114,4 +119,5 @@ def preprocess_mel_mulaw(
     path_o_mel.parent.mkdir(parents=True, exist_ok=True)
     save(FloatTensor(logmel.T), path_o_mel)
     path_o_mulaw.parent.mkdir(parents=True, exist_ok=True)
+    # todo: can be `torch.ShortTensor`?
     save(LongTensor(mulaw), path_o_mulaw)

@@ -23,11 +23,12 @@ def melspectrogram(wave: np.ndarray, sr: int, hop_length: int, win_length: int) 
 
     # Hardcoded hyperparams.
     n_fft = 2048
-    n_mels = 80
-    fmin = 50
     preemph = 0.97
     top_db = 80
     ref_db = 20
+    # from paper, 'with 80 coefficients and frequencies ranging from 50 Hz to 12 kHz.' (12 kHz = sr/2)
+    n_mels = 80
+    fmin = 50
 
     mel = librosa.feature.melspectrogram(
         librosa.effects.preemphasis(wave, coef=preemph),
@@ -36,7 +37,7 @@ def melspectrogram(wave: np.ndarray, sr: int, hop_length: int, win_length: int) 
         win_length=win_length,
         n_fft=n_fft,
         n_mels=n_mels,
-        fmin=fmin,
+        fmin=fmin, # fmax is default sr/2
         norm=1,
         power=1, # amplitude/energy
     )

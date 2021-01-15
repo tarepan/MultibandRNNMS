@@ -65,13 +65,12 @@ class LJSpeechDataModule(LightningDataModule):
                 dataset_dir_adress=self._adress_dir_datasets,
             )
 
-            # use modulo for validation (#training become batch*N)
+            # three (variable-length) sample audio without batching
             n_full = len(dataset_full)
-            mod = n_full % self.batch_size
             self.dataset_train, self.dataset_val = random_split(
-                dataset_full, [n_full - mod, mod]
+                dataset_full, [n_full - 3, 3]
             )
-            self.batch_size_val = mod
+            self.batch_size_val = 1
         if stage == "test" or stage is None:
             self.dataset_test = LJSpeech_mel_mulaw(
                 train=False,

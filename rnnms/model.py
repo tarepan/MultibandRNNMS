@@ -53,8 +53,8 @@ class RNN_MS(pl.LightningModule):
 
         wave_mu_law, spec_mel = batch
 
-        bits_evergy_sereis = self.rnnms(wave_mu_law[:, :-1], spec_mel)
-        loss = F.cross_entropy(bits_evergy_sereis.transpose(1, 2), wave_mu_law[:, 1:])
+        bits_energy_sereis = self.rnnms(wave_mu_law[:, :-1], spec_mel)
+        loss = F.cross_entropy(bits_energy_sereis.transpose(1, 2), wave_mu_law[:, 1:])
 
         self.log('loss', loss)
         return {"loss": loss}

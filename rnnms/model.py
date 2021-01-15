@@ -56,6 +56,7 @@ class RNN_MS(pl.LightningModule):
         bits_evergy_sereis = self.rnnms(wave_mu_law[:, :-1], spec_mel)
         loss = F.cross_entropy(bits_evergy_sereis.transpose(1, 2), wave_mu_law[:, 1:])
 
+        self.log('loss', loss)
         return {"loss": loss}
 
     def configure_optimizers(self):

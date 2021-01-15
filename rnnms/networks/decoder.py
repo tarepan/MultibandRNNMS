@@ -76,7 +76,7 @@ class C_eAR_GenRNN(nn.Module):
         sample_series = []
         cell = get_gru_cell(self.rnn)
         # initialization
-        batch_size, sample_size, _ = i_cnd_series.size()
+        batch_size, _, _ = i_cnd_series.size()
         h_prev = torch.zeros(batch_size, self.size_h_rnn, device=i_cnd_series.device)
         sample_t_minus_1 = torch.zeros(batch_size, device=i_cnd_series.device).fill_(self.size_out // 2).long()
 

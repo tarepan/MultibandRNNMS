@@ -54,24 +54,37 @@ class RNN_MS_Vocoder(nn.Module):
 
         # Cond. Upsampling
         # Tensor(batch, T_mel*hop_length, 2*size_latent)
-        latents = F.interpolate(latents.transpose(1, 2), scale_factor=self.hop_length)
-        latents = latents.transpose(1, 2)
+        latents_upsampled: Tensor = F.interpolate(latents.transpose(1, 2), scale_factor=self.hop_length).transpose(1, 2)
 
         # Autoregressive
-        bits_energy_series = self.decoder(wave_mu_law, latents)
+        bits_energy_series = self.decoder(wave_mu_law, latents_upsampled)
 
         return bits_energy_series
 
-    def generate(self, mel: Tensor):
+    def generate(self, mel: Tensor) -> Tensor:
+        """Generate waveform from mel-spectrogram.
+
+        Input has variable length, and long zero padding is not good for RNN, so batch_size must be 1.
+
+        Args:
+            mel (Tensor(1, T_mel, freq)): Mel-spectrogram tensor. 
+        Returns:
+            (Tensor(1, T_mel * hop_length)) Generated waveform. A sample point is in range [-1, 1].
+        """
+
         # Encoding for conditioning
         latents, _ = self.encoder(mel)
 
         # Cond. Upsampling
-        latents = F.interpolate(latents.transpose(1, 2), scale_factor=self.hop_length)
-        latents = latents.transpose(1, 2)
+        latents_upsampled: Tensor = F.interpolate(latents.transpose(1, 2), scale_factor=self.hop_length).transpose(1, 2)
 
         # Autoregressive
-        output_mu_law = self.decoder.generate(latents)
-        output = self.mulaw_dec(output_mu_law)
+        output_mu_law = self.decoder.generate(latents_upsampled)
 
-        return output
+        # μ-law expansion.
+        # range: [0, 2^bit -1] => [-1, 1]
+        # [PyTorch](https://pytorch.org/audio/stable/transforms.html#mulawdecoding)
+        # bshall/UniversalVocoding use librosa, so range adaption ([0, n] -> [-n/2, n/2]) was needed.
+        output_wave: Tensor = self.mulaw_dec(output_mu_law)
+
+        return output_wave

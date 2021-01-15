@@ -5,6 +5,9 @@ import torch.nn.functional as F
 
 
 def get_gru_cell(gru):
+    """Transfer (learned) GRU state to a new GRUCell.
+    """
+
     gru_cell = nn.GRUCell(gru.input_size, gru.hidden_size)
     gru_cell.weight_hh.data = gru.weight_hh_l0.data
     gru_cell.weight_ih.data = gru.weight_ih_l0.data
@@ -68,17 +71,22 @@ class C_eAR_GenRNN(nn.Module):
         o = self.fc2(F.relu(self.fc1(o_rnn)))
         return o
 
-    def generate(self, i_cnd_series: Tensor):
+    def generate(self, i_cnd_series: Tensor) -> Tensor:
         """
         Generate samples auto-regressively with given latent series.
+
+        Returns:
+            Sample series, each point is in range [0, (int), size_o - 1]
         """
 
-        sample_series = []
+        sample_series = torch.tensor([[]])
         cell = get_gru_cell(self.rnn)
+        batch_size = i_cnd_series.size(0)
         # initialization
-        batch_size, _, _ = i_cnd_series.size()
         h_prev = torch.zeros(batch_size, self.size_h_rnn, device=i_cnd_series.device)
-        sample_t_minus_1 = torch.zeros(batch_size, device=i_cnd_series.device).fill_(self.size_out // 2).long()
+        sample_t_minus_1 = torch.zeros(batch_size, device=i_cnd_series.device, dtype=torch.long)
+        # non-zero t=-1 (not saved in output) sample
+        sample_t_minus_1 = sample_t_minus_1.fill_(self.size_out // 2)
 
         # Auto-regiressive sample series generation
         # separate speech-conditioning according to Time
@@ -90,8 +98,8 @@ class C_eAR_GenRNN(nn.Module):
             posterior_t = F.softmax(o_t, dim=1)
             dist_t = torch.distributions.Categorical(posterior_t)
             # Random sampling from categorical distribution
-            sample_t = dist_t.sample()
-            sample_series.append(2 * sample_t.float().item() / (self.size_out - 1.) - 1.)
+            sample_t: Tensor = dist_t.sample()
+            sample_series = torch.cat((sample_series, sample_t), dim=1)
             sample_t_minus_1 = sample_t
 
         return sample_series

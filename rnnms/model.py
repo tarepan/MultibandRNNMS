@@ -59,6 +59,38 @@ class RNN_MS(pl.LightningModule):
         self.log('loss', loss)
         return {"loss": loss}
 
+    def validation_step(self, batch: Tuple[Tensor, Tensor], batch_idx: int):
+        """full length needed & padding is not good (long white seems to be not good for RNN) => cannot batch (batch=1)
+        """
+
+        _, mels = batch
+
+        # loss calculation
+        # For validation, AR generation can be applied, so cannot use `training_step`.
+        # sampling+ARでbits_energy_seriesを作りつつ、サンプルじゃなくてそいつらを評価?
+        # o_G = self.training_step(batch, batch_idx, 0)
+
+        # sample generation
+        wave = self.rnnms.generate(mels)
+
+        # [-1, 1] restriction
+        #   approach A: Clip (x>1 => x=1)
+        #   approach B: Scale (max>1 => series/max)
+        # In this implementation, already scaled in [-1, 1].
+
+        # [PyTorch](https://pytorch.org/docs/stable/tensorboard.html#torch.utils.tensorboard.writer.SummaryWriter.add_audio)
+        # add_audio(tag: str, snd_tensor: Tensor(1, L), global_step: Optional[int] = None, sample_rate: int = 44100)
+        self.logger.experiment.add_audio(
+            f"audio_{batch_idx}",
+            wave,
+            global_step=self.global_step,
+            sample_rate=self.hparams.learning_rate,
+        )
+
+        return {
+            "val_loss": 0,
+        }
+
     def configure_optimizers(self):
         """Set up a optimizer
         """

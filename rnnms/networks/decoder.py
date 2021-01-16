@@ -86,7 +86,7 @@ class C_eAR_GenRNN(nn.Module):
         # initialization
         h_prev = torch.zeros(batch_size, self.size_h_rnn, device=i_cnd_series.device)
         # [Batch]
-        sample_t_minus_1 = torch.zeros(batch_size, device=i_cnd_series.device, dtype=torch.long)
+        sample_t_minus_1 = torch.zeros(batch_size, device=i_cnd_series.device, dtype=torch.int16)
         # ※ μ-law specific part
         # In μ-law representation, center == volume 0, so self.size_out // 2 equal to zero volume
         sample_t_minus_1 = sample_t_minus_1.fill_(self.size_out // 2)

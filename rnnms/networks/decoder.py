@@ -79,6 +79,11 @@ class C_eAR_GenRNN(nn.Module):
             Sample series, each point is in range [0, (int), size_o - 1]
         """
 
+        # Temporal care for OOM by long audio inference
+        l = i_cnd_series.size(1)
+        if l > 3000:
+            i_cnd_series = i_cnd_series[:, :3000, :]
+
         batch_size = i_cnd_series.size(0)
         # [Batch, T] (initialized as [Batch, 0])
         sample_series = torch.tensor([[] for _ in range(batch_size)], device=i_cnd_series.device)

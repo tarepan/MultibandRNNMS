@@ -106,7 +106,8 @@ class C_eAR_GenRNN(nn.Module):
             # [Batch] => [Batch, size_i_embed_ar]
             i_embed_ar_t = self.embedding(sample_t_minus_1)
             h_rnn_t = cell(torch.cat((i_embed_ar_t, i_cond_t), dim=1), h_prev)
-            o_t = self.fc2(F.relu(self.fc1(h_rnn_t)))
+            h_fc = F.relu(self.fc1(h_rnn_t))
+            o_t = self.fc2(h_fc)
             posterior_t = F.softmax(o_t, dim=1)
             dist_t = torch.distributions.Categorical(posterior_t)
             # Random sampling from categorical distribution

@@ -79,13 +79,13 @@ class C_eAR_GenRNN(nn.Module):
             Sample series, each point is in range [0, (int), size_o - 1]
         """
 
-        print(i_cnd_series.size())
-
-        sample_series = torch.tensor([[]], device=i_cnd_series.device)
-        cell = get_gru_cell(self.rnn)
         batch_size = i_cnd_series.size(0)
+        # [Batch, T] (initialized as [Batch, 0])
+        sample_series = torch.tensor([[] for _ in range(batch_size)], device=i_cnd_series.device)
+        cell = get_gru_cell(self.rnn)
         # initialization
         h_prev = torch.zeros(batch_size, self.size_h_rnn, device=i_cnd_series.device)
+        # [Batch]
         sample_t_minus_1 = torch.zeros(batch_size, device=i_cnd_series.device, dtype=torch.long)
         # ※ μ-law specific part
         # In μ-law representation, center == volume 0, so self.size_out // 2 equal to zero volume
@@ -93,8 +93,10 @@ class C_eAR_GenRNN(nn.Module):
 
         # Auto-regiressive sample series generation
         # separate speech-conditioning according to Time
+        # [Batch, T_mel, freq] => [Batch, freq]
         conditionings = torch.unbind(i_cnd_series, dim=1)
         for i_cond_t in conditionings:
+            # [Batch] => [Batch, size_i_embed_ar]
             i_embed_ar_t = self.embedding(sample_t_minus_1)
             h_rnn_t = cell(torch.cat((i_embed_ar_t, i_cond_t), dim=1), h_prev)
             o_t = self.fc2(F.relu(self.fc1(h_rnn_t)))
@@ -102,9 +104,8 @@ class C_eAR_GenRNN(nn.Module):
             dist_t = torch.distributions.Categorical(posterior_t)
             # Random sampling from categorical distribution
             sample_t: Tensor = dist_t.sample()
-            # print(sample_series.size())
-            # print(sample_t.size())
-            # sample_series = torch.cat((sample_series, sample_t), dim=1)
+            # Reshape: [Batch] => [Batch, 1] (can be concatenated with [Batch, T])
+            sample_series = torch.cat((sample_series, sample_t.reshape((-1, 1))), dim=1)
             sample_t_minus_1 = sample_t
 
         return sample_series

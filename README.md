@@ -41,6 +41,21 @@ ToDO: Link super great impressive high-quatity audio demo.
 
 For arguments, check [./rnnms/args.py](https://github.com/tarepan/UniversalVocoding/blob/main/rnnms/args.py)  
 
+### preprocessing <!-- omit in toc -->
+"Bbatteries Included" 😉  
+`dataset` transparently download corpus and preprocess it for you.  
+
+### Custom dataset <!-- omit in toc -->
+Copy [`rnnms.main_train`] and replace DataModule.  
+
+```python
+    # datamodule = LJSpeechDataModule(batch_size, ...)
+    datamodule = YourSuperCoolDataModule(batch_size, ...)
+    # That's all!
+```
+
+[`rnnms.main_train`]:https://github.com/tarepan/UniversalVocoding/blob/main/rnnms/main_train.py
+
 ## System Details
 ### Model <!-- omit in toc -->
 - Encoder: 2-layer bidi-GRU (so that no time-directional compression)
@@ -57,8 +72,11 @@ For arguments, check [./rnnms/args.py](https://github.com/tarepan/UniversalVocod
 | Presicion     |   -              | 32/16 Mixed     |
 
 ## Results
+### Output Sample <!-- omit in toc -->
+[Demo](#demo)
+
 ### Performance <!-- omit in toc -->
-1.1 [iter/sec] @ NVIDIA T4 Google Colaboratory (AMP+, num_workers=8)  
+1.1 [iter/sec] @ NVIDIA T4 on Google Colaboratory (AMP+, num_workers=8)  
 (1.1 [iter/sec] with [bshall/UniversalVocoding], same setup)  
 
 ### Knowledge from Original Repository <!-- omit in toc -->

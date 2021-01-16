@@ -79,7 +79,7 @@ class C_eAR_GenRNN(nn.Module):
             Sample series, each point is in range [0, (int), size_o - 1]
         """
 
-        sample_series = torch.tensor([[]])
+        sample_series = torch.tensor([[]], device=i_cnd_series.device)
         cell = get_gru_cell(self.rnn)
         batch_size = i_cnd_series.size(0)
         # initialization

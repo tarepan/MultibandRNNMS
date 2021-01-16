@@ -2,9 +2,9 @@ from argparse import ArgumentParser
 
 import pytorch_lightning
 
-from .args import parseArgments
-from .data.datamodule import DataLoaderPerformance, LJSpeechDataModule
-from .train import train
+from rnnms.args import parseArgments
+from rnnms.data.datamodule import DataLoaderPerformance, LJSpeechDataModule
+from rnnms.train import train
 
 
 def main_train():

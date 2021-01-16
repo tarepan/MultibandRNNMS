@@ -96,6 +96,7 @@ class C_eAR_GenRNN(nn.Module):
         # separate speech-conditioning according to Time
         # [Batch, T_mel, freq] => [Batch, freq]
         conditionings = torch.unbind(i_cnd_series, dim=1)
+        i = 0
         for i_cond_t in conditionings:
             # [Batch] => [Batch, size_i_embed_ar]
             i_embed_ar_t = self.embedding(sample_t_minus_1)
@@ -108,5 +109,7 @@ class C_eAR_GenRNN(nn.Module):
             # Reshape: [Batch] => [Batch, 1] (can be concatenated with [Batch, T])
             sample_series = torch.cat((sample_series, sample_t.reshape((-1, 1))), dim=1)
             sample_t_minus_1 = sample_t
+            print(i)
+            i = i+1
 
         return sample_series

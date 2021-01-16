@@ -86,7 +86,8 @@ class C_eAR_GenRNN(nn.Module):
         # initialization
         h_prev = torch.zeros(batch_size, self.size_h_rnn, device=i_cnd_series.device)
         # [Batch]
-        sample_t_minus_1 = torch.zeros(batch_size, device=i_cnd_series.device, dtype=torch.int16)
+        # nn.Embedding needs LongTensor input
+        sample_t_minus_1 = torch.zeros(batch_size, device=i_cnd_series.device, dtype=torch.long)
         # ※ μ-law specific part
         # In μ-law representation, center == volume 0, so self.size_out // 2 equal to zero volume
         sample_t_minus_1 = sample_t_minus_1.fill_(self.size_out // 2)
@@ -105,7 +106,7 @@ class C_eAR_GenRNN(nn.Module):
             # Random sampling from categorical distribution
             sample_t: Tensor = dist_t.sample()
             # Reshape: [Batch] => [Batch, 1] (can be concatenated with [Batch, T])
-            sample_series = torch.cat((sample_series, sample_t.reshape((-1, 1)).short()), dim=1)
+            sample_series = torch.cat((sample_series, sample_t.reshape((-1, 1))), dim=1)
             sample_t_minus_1 = sample_t
 
         return sample_series

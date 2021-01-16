@@ -11,18 +11,6 @@ from pytorch_lightning.core.datamodule import LightningDataModule
 from .model import RNN_MS
 
 
-# # -- looks good. can be transplanted.
-# # Add original utterance to TensorBoard
-# if args.resume is None:
-#     with open(os.path.join(args.data_dir, "test.txt"), encoding="utf-8") as f:
-#         test_wavnpy_paths = [line.strip().split("|")[1] for line in f]
-#     for index, wavnpy_path in enumerate(test_wavnpy_paths):
-#         muraw_code = torch.from_numpy(np.load(wavnpy_path))
-#         wav_pth = mu_law_decoding(muraw_code, 2**params["preprocessing"]["bits"])
-#         writer.add_audio("orig", wav_pth, global_step=global_step, sample_rate=params["preprocessing"]["sample_rate"])
-#         break
-# # --
-
 def train(args: Namespace, datamodule: LightningDataModule) -> None:
     """Train RNN_MS on PyTorch-Lightning.
     """

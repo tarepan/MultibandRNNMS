@@ -79,6 +79,8 @@ class C_eAR_GenRNN(nn.Module):
             Sample series, each point is in range [0, (int), size_o - 1]
         """
 
+        print(i_cnd_series.size())
+
         sample_series = torch.tensor([[]], device=i_cnd_series.device)
         cell = get_gru_cell(self.rnn)
         batch_size = i_cnd_series.size(0)
@@ -100,8 +102,8 @@ class C_eAR_GenRNN(nn.Module):
             dist_t = torch.distributions.Categorical(posterior_t)
             # Random sampling from categorical distribution
             sample_t: Tensor = dist_t.sample()
-            print(sample_series.size())
-            print(sample_t.size())
+            # print(sample_series.size())
+            # print(sample_t.size())
             # sample_series = torch.cat((sample_series, sample_t), dim=1)
             sample_t_minus_1 = sample_t
 

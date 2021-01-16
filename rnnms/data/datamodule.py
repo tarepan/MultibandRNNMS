@@ -46,7 +46,7 @@ class LJSpeechDataModule(LightningDataModule):
         self._pin_memory = performance.pin_memory
 
         self._adress_corpuses = f"{adress_data_root}/corpuses/LJSpeech-1.1.tar.bz2" if adress_data_root else None
-        self._adress_dir_datasets = f"{adress_data_root}/datasets" if adress_data_root else None
+        self._adress_dir_datasets = f"{adress_data_root}/datasets/LJSpeech" if adress_data_root else None
 
     def prepare_data(self, *args, **kwargs) -> None:
         LJSpeech_mel_mulaw(

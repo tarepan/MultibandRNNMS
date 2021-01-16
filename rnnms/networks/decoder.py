@@ -84,8 +84,9 @@ class C_eAR_GenRNN(nn.Module):
         batch_size = i_cnd_series.size(0)
         # initialization
         h_prev = torch.zeros(batch_size, self.size_h_rnn, device=i_cnd_series.device)
-        sample_t_minus_1 = torch.zeros(batch_size, device=i_cnd_series.device, dtype=torch.long)
-        # non-zero t=-1 (not saved in output) sample
+        sample_t_minus_1 = torch.zeros(batch_size, 1, device=i_cnd_series.device, dtype=torch.long)
+        # ※ μ-law specific part
+        # In μ-law representation, center == volume 0, so self.size_out // 2 equal to zero volume
         sample_t_minus_1 = sample_t_minus_1.fill_(self.size_out // 2)
 
         # Auto-regiressive sample series generation

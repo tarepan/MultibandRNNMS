@@ -80,9 +80,9 @@ class C_eAR_GenRNN(nn.Module):
         """
 
         # Temporal care for OOM by long audio inference
-        l = i_cnd_series.size(1)
-        if l > 3000:
-            i_cnd_series = i_cnd_series[:, :3000, :]
+        # l = i_cnd_series.size(1)
+        # if l > 3000:
+        #     i_cnd_series = i_cnd_series[:, :3000, :]
 
         batch_size = i_cnd_series.size(0)
         # [Batch, T] (initialized as [Batch, 0])

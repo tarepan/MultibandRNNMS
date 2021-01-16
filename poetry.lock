@@ -699,7 +699,7 @@ torch = "1.7.0"
 
 [[package]]
 name = "tqdm"
-version = "4.55.1"
+version = "4.56.0"
 description = "Fast, Extensible Progress Meter"
 category = "main"
 optional = false
@@ -770,7 +770,7 @@ testing = ["pytest (>=3.5,!=3.7.3)", "pytest-checkdocs (>=1.2.3)", "pytest-flake
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.6.1"
-content-hash = "dcee802ce109a9e04552ff158f84f1bec2a484fc9e0a5956215fe15a89202227"
+content-hash = "4cc70f9b37a66bda68fea2d9b7247c3321d4cff7ea11e2735523a8b4b930e6fe"
 
 [metadata.files]
 absl-py = [
@@ -1295,8 +1295,8 @@ torchaudio = [
     {file = "torchaudio-0.7.0-cp38-cp38-manylinux1_x86_64.whl", hash = "sha256:b9f405a943c67ad6bb4e7ebcaa3206cb72cf902819d51673a1697f25512a2329"},
 ]
 tqdm = [
-    {file = "tqdm-4.55.1-py2.py3-none-any.whl", hash = "sha256:b8b46036fd00176d0870307123ef06bb851096964fa7fc578d789f90ce82c3e4"},
-    {file = "tqdm-4.55.1.tar.gz", hash = "sha256:556c55b081bd9aa746d34125d024b73f0e2a0e62d5927ff0e400e20ee0a03b9a"},
+    {file = "tqdm-4.56.0-py2.py3-none-any.whl", hash = "sha256:4621f6823bab46a9cc33d48105753ccbea671b68bab2c50a9f0be23d4065cb5a"},
+    {file = "tqdm-4.56.0.tar.gz", hash = "sha256:fe3d08dd00a526850568d542ff9de9bbc2a09a791da3c334f3213d8d0bbbca65"},
 ]
 typing-extensions = [
     {file = "typing_extensions-3.7.4.3-py2-none-any.whl", hash = "sha256:dafc7639cde7f1b6e1acc0f457842a83e722ccca8eef5270af2d74792619a89f"},

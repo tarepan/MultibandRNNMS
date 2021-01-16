@@ -14,7 +14,6 @@ pytorch-lightning = "^1.1.3"
 fsspec = {extras = ["http", "s3"], version = "^0.8.4"}
 boto3 = "^1.16.18"
 numpy = "^1.16"
-tqdm = "*"
 corpuspy = {git = "https://github.com/tarepan/corpuspy.git", rev = "main"}
 pyloudnorm = "^0.1.0"
 librosa = "^0.8.0"

@@ -84,7 +84,7 @@ class RNN_MS(pl.LightningModule):
             f"audio_{batch_idx}",
             wave,
             global_step=self.global_step,
-            sample_rate=self.hparams.learning_rate,
+            sample_rate=self.hparams.sampling_rate,
         )
 
         return {

@@ -115,6 +115,7 @@ class C_eAR_GenRNN(nn.Module):
             sample_series = torch.cat((sample_series, sample_t.reshape((-1, 1))), dim=1)
             sample_t_minus_1 = sample_t
             print(i)
+            print(sample_series.size())
             i = i+1
 
         return sample_series

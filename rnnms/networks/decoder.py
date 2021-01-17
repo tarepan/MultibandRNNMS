@@ -92,7 +92,7 @@ class C_eAR_GenRNN(nn.Module):
         sample_series = torch.tensor([[] for _ in range(batch_size)], device=i_cnd_series.device)
         cell = get_gru_cell(self.rnn)
         # initialization
-        h_prev = torch.zeros(batch_size, self.size_h_rnn, device=i_cnd_series.device)
+        h_rnn_t_minus_1 = torch.zeros(batch_size, self.size_h_rnn, device=i_cnd_series.device)
         # [Batch]
         # nn.Embedding needs LongTensor input
         sample_t_minus_1 = torch.zeros(batch_size, device=i_cnd_series.device, dtype=torch.long)
@@ -112,7 +112,7 @@ class C_eAR_GenRNN(nn.Module):
         for i_cond_t in conditionings:
             # [Batch] => [Batch, size_i_embed_ar]
             i_embed_ar_t = self.embedding(sample_t_minus_1)
-            h_rnn_t = cell(torch.cat((i_embed_ar_t, i_cond_t), dim=1), h_prev)
+            h_rnn_t = cell(torch.cat((i_embed_ar_t, i_cond_t), dim=1), h_rnn_t_minus_1)
             o_t = self.fc2(F.relu(self.fc1(h_rnn_t)))
             posterior_t = F.softmax(o_t, dim=1)
             dist_t = torch.distributions.Categorical(posterior_t)
@@ -120,7 +120,9 @@ class C_eAR_GenRNN(nn.Module):
             sample_t: Tensor = dist_t.sample()
             # Reshape: [Batch] => [Batch, 1] (can be concatenated with [Batch, T])
             # sample_series = torch.cat((sample_series, sample_t.reshape((-1, 1))), dim=1)
+            # t => t-1
             sample_t_minus_1 = sample_t
+            h_rnn_t_minus_1 = h_rnn_t
             # print(i)
             # print(sample_series.size())
             i = i+1

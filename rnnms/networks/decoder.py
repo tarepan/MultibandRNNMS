@@ -80,7 +80,7 @@ class C_eAR_GenRNN(nn.Module):
         """
 
         # todo: delete this debug hack
-        print(torch.cuda.memory_allocated())
+        print(f"Decoder start: {torch.cuda.memory_allocated()}")
 
         # Temporal care for OOM by long audio inference
         # l = i_cnd_series.size(1)
@@ -104,12 +104,12 @@ class C_eAR_GenRNN(nn.Module):
         # separate speech-conditioning according to Time
         # [Batch, T_mel, freq] => [Batch, freq]
         conditionings = torch.unbind(i_cnd_series, dim=1)
+
+        # todo: delete this debug hack
+        print(f"before AR loop: {torch.cuda.memory_allocated()}")
+
         i = 0
         for i_cond_t in conditionings:
-
-            # todo: delete this debug hack
-            print(torch.cuda.memory_allocated())
-
             # [Batch] => [Batch, size_i_embed_ar]
             i_embed_ar_t = self.embedding(sample_t_minus_1)
             h_rnn_t = cell(torch.cat((i_embed_ar_t, i_cond_t), dim=1), h_prev)
@@ -121,7 +121,7 @@ class C_eAR_GenRNN(nn.Module):
             # Reshape: [Batch] => [Batch, 1] (can be concatenated with [Batch, T])
             # sample_series = torch.cat((sample_series, sample_t.reshape((-1, 1))), dim=1)
             sample_t_minus_1 = sample_t
-            print(i)
+            # print(i)
             # print(sample_series.size())
             i = i+1
 

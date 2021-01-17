@@ -1,6 +1,6 @@
 from typing import Tuple
 
-from torch.tensor import Tensor
+from torch import no_grad, Tensor
 import torch.nn.functional as F
 from torch.optim import Adam
 from torch.optim.lr_scheduler import StepLR
@@ -71,7 +71,8 @@ class RNN_MS(pl.LightningModule):
         # o_G = self.training_step(batch, batch_idx, 0)
 
         # sample generation
-        wave = self.rnnms.generate(mels)
+        with no_grad():
+            wave = self.rnnms.generate(mels)
 
         # [-1, 1] restriction
         #   approach A: Clip (x>1 => x=1)

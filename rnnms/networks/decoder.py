@@ -112,7 +112,7 @@ class C_eAR_GenRNN(nn.Module):
             # Random sampling from categorical distribution
             sample_t: Tensor = dist_t.sample()
             # Reshape: [Batch] => [Batch, 1] (can be concatenated with [Batch, T])
-            sample_series = torch.cat((sample_series, sample_t.reshape((-1, 1))), dim=1)
+            # sample_series = torch.cat((sample_series, sample_t.reshape((-1, 1))), dim=1)
             sample_t_minus_1 = sample_t
             print(i)
             print(sample_series.size())

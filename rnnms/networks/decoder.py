@@ -116,11 +116,11 @@ class C_eAR_GenRNN(nn.Module):
                 print(f"loop start: {torch.cuda.memory_allocated()}")
                 i_embed_ar_t = self.embedding(sample_t_minus_1)
                 print(f"embedded: {torch.cuda.memory_allocated()}")
-                # todo: remove debug hack
-                h_rnn_t = h_rnn_t_minus_1
                 # h_rnn_t = cell(torch.cat((i_embed_ar_t, i_cond_t), dim=1), h_rnn_t_minus_1)
                 print(f"cell executed: {torch.cuda.memory_allocated()}")
-                o_t = self.fc2(F.relu(self.fc1(h_rnn_t)))
+                # o_t = self.fc2(F.relu(self.fc1(h_rnn_t)))
+                # todo: remove hack
+                o_t = self.fc2(F.relu(self.fc1(h_rnn_t_minus_1)))
                 print(f"output: {torch.cuda.memory_allocated()}")
                 posterior_t = F.softmax(o_t, dim=1)
                 print(f"softmaxed: {torch.cuda.memory_allocated()}")

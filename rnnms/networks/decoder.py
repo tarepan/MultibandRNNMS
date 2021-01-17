@@ -79,6 +79,9 @@ class C_eAR_GenRNN(nn.Module):
             Sample series, each point is in range [0, (int), size_o - 1]
         """
 
+        # todo: delete this debug hack
+        print(torch.cuda.memory_allocated())
+
         # Temporal care for OOM by long audio inference
         # l = i_cnd_series.size(1)
         # if l > 3000:
@@ -103,6 +106,10 @@ class C_eAR_GenRNN(nn.Module):
         conditionings = torch.unbind(i_cnd_series, dim=1)
         i = 0
         for i_cond_t in conditionings:
+
+            # todo: delete this debug hack
+            print(torch.cuda.memory_allocated())
+
             # [Batch] => [Batch, size_i_embed_ar]
             i_embed_ar_t = self.embedding(sample_t_minus_1)
             h_rnn_t = cell(torch.cat((i_embed_ar_t, i_cond_t), dim=1), h_prev)
@@ -115,7 +122,7 @@ class C_eAR_GenRNN(nn.Module):
             # sample_series = torch.cat((sample_series, sample_t.reshape((-1, 1))), dim=1)
             sample_t_minus_1 = sample_t
             print(i)
-            print(sample_series.size())
+            # print(sample_series.size())
             i = i+1
 
         return sample_series

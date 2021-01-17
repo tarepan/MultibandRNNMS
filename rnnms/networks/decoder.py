@@ -118,9 +118,7 @@ class C_eAR_GenRNN(nn.Module):
                 print(f"embedded: {torch.cuda.memory_allocated()}")
                 h_rnn_t = cell(torch.cat((i_embed_ar_t, i_cond_t), dim=1), h_rnn_t_minus_1)
                 print(f"cell executed: {torch.cuda.memory_allocated()}")
-                h_fc = F.relu(self.fc1(h_rnn_t))
-                print(f"fc1: {torch.cuda.memory_allocated()}")
-                o_t = self.fc2(h_fc)
+                o_t = self.fc2(F.relu(self.fc1(h_rnn_t)))
                 print(f"output: {torch.cuda.memory_allocated()}")
                 posterior_t = F.softmax(o_t, dim=1)
                 print(f"softmaxed: {torch.cuda.memory_allocated()}")
@@ -132,9 +130,9 @@ class C_eAR_GenRNN(nn.Module):
                 # Reshape: [Batch] => [Batch, 1] (can be concatenated with [Batch, T])
                 # sample_series = torch.cat((sample_series, sample_t.reshape((-1, 1))), dim=1)
                 # t => t-1
-                sample_t_minus_1 = sample_t
+                # sample_t_minus_1 = sample_t
                 print(f"sample t -> t-1: {torch.cuda.memory_allocated()}")
-                h_rnn_t_minus_1 = h_rnn_t
+                # h_rnn_t_minus_1 = h_rnn_t
                 # print(i)
                 # print(sample_series.size())
                 i = i+1

@@ -100,31 +100,33 @@ class C_eAR_GenRNN(nn.Module):
         # In μ-law representation, center == volume 0, so self.size_out // 2 equal to zero volume
         sample_t_minus_1 = sample_t_minus_1.fill_(self.size_out // 2)
 
-        # Auto-regiressive sample series generation
-        # separate speech-conditioning according to Time
-        # [Batch, T_mel, freq] => [Batch, freq]
-        conditionings = torch.unbind(i_cnd_series, dim=1)
+        with torch.no_grad():
 
-        # todo: delete this debug hack
-        print(f"before AR loop: {torch.cuda.memory_allocated()}")
+            # Auto-regiressive sample series generation
+            # separate speech-conditioning according to Time
+            # [Batch, T_mel, freq] => [Batch, freq]
+            conditionings = torch.unbind(i_cnd_series, dim=1)
 
-        i = 0
-        for i_cond_t in conditionings:
-            # [Batch] => [Batch, size_i_embed_ar]
-            i_embed_ar_t = self.embedding(sample_t_minus_1)
-            h_rnn_t = cell(torch.cat((i_embed_ar_t, i_cond_t), dim=1), h_rnn_t_minus_1)
-            o_t = self.fc2(F.relu(self.fc1(h_rnn_t)))
-            posterior_t = F.softmax(o_t, dim=1)
-            dist_t = torch.distributions.Categorical(posterior_t)
-            # Random sampling from categorical distribution
-            sample_t: Tensor = dist_t.sample()
-            # Reshape: [Batch] => [Batch, 1] (can be concatenated with [Batch, T])
-            # sample_series = torch.cat((sample_series, sample_t.reshape((-1, 1))), dim=1)
-            # t => t-1
-            sample_t_minus_1 = sample_t
-            h_rnn_t_minus_1 = h_rnn_t
-            # print(i)
-            # print(sample_series.size())
-            i = i+1
+            # todo: delete this debug hack
+            print(f"before AR loop: {torch.cuda.memory_allocated()}")
+
+            i = 0
+            for i_cond_t in conditionings:
+                # [Batch] => [Batch, size_i_embed_ar]
+                i_embed_ar_t = self.embedding(sample_t_minus_1)
+                h_rnn_t = cell(torch.cat((i_embed_ar_t, i_cond_t), dim=1), h_rnn_t_minus_1)
+                o_t = self.fc2(F.relu(self.fc1(h_rnn_t)))
+                posterior_t = F.softmax(o_t, dim=1)
+                dist_t = torch.distributions.Categorical(posterior_t)
+                # Random sampling from categorical distribution
+                sample_t: Tensor = dist_t.sample()
+                # Reshape: [Batch] => [Batch, 1] (can be concatenated with [Batch, T])
+                # sample_series = torch.cat((sample_series, sample_t.reshape((-1, 1))), dim=1)
+                # t => t-1
+                sample_t_minus_1 = sample_t
+                h_rnn_t_minus_1 = h_rnn_t
+                # print(i)
+                # print(sample_series.size())
+                i = i+1
 
         return sample_series

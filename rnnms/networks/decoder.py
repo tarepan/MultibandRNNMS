@@ -79,14 +79,6 @@ class C_eAR_GenRNN(nn.Module):
             Sample series, each point is in range [0, (int), size_o - 1]
         """
 
-        # todo: delete this debug hack
-        print(f"Decoder start: {torch.cuda.memory_allocated()}")
-
-        # Temporal care for OOM by long audio inference
-        # l = i_cnd_series.size(1)
-        # if l > 3000:
-        #     i_cnd_series = i_cnd_series[:, :3000, :]
-
         batch_size = i_cnd_series.size(0)
         # [Batch, T] (initialized as [Batch, 0])
         sample_series = torch.tensor([[] for _ in range(batch_size)], device=i_cnd_series.device)
@@ -100,30 +92,26 @@ class C_eAR_GenRNN(nn.Module):
         # In μ-law representation, center == volume 0, so self.size_out // 2 equal to zero volume
         sample_t_minus_1 = sample_t_minus_1.fill_(self.size_out // 2)
 
-        with torch.no_grad():
-            # Auto-regiressive sample series generation
-            # separate speech-conditioning according to Time
-            # [Batch, T_mel, freq] => [Batch, freq]
-            conditionings = torch.unbind(i_cnd_series, dim=1)
+        # Auto-regiressive sample series generation
+        # separate speech-conditioning according to Time
+        # [Batch, T_mel, freq] => [Batch, freq]
+        conditionings = torch.unbind(i_cnd_series, dim=1)
 
-            # todo: delete this debug hack
-            print(f"before AR loop: {torch.cuda.memory_allocated()}")
-
-            for i_cond_t in conditionings:
-                # [Batch] => [Batch, size_i_embed_ar]
-                print(f"loop start: {torch.cuda.memory_allocated()}")
-                i_embed_ar_t = self.embedding(sample_t_minus_1)
-                h_rnn_t = cell(torch.cat((i_embed_ar_t, i_cond_t), dim=1), h_rnn_t_minus_1)
-                o_t = self.fc2(F.relu(self.fc1(h_rnn_t)))
-                posterior_t = F.softmax(o_t, dim=1)
-                dist_t = torch.distributions.Categorical(posterior_t)
-                # Random sampling from categorical distribution
-                sample_t: Tensor = dist_t.sample()
-                # Reshape: [Batch] => [Batch, 1] (can be concatenated with [Batch, T])
-                sample_series = torch.cat((sample_series, sample_t.reshape((-1, 1))), dim=1)
-                # t => t-1
-                sample_t_minus_1 = sample_t
-                h_rnn_t_minus_1 = h_rnn_t
-                print(f"loop end: {torch.cuda.memory_allocated()}")
+        for i_cond_t in conditionings:
+            # [Batch] => [Batch, size_i_embed_ar]
+            print(f"loop start: {torch.cuda.memory_allocated()}")
+            i_embed_ar_t = self.embedding(sample_t_minus_1)
+            h_rnn_t = cell(torch.cat((i_embed_ar_t, i_cond_t), dim=1), h_rnn_t_minus_1)
+            o_t = self.fc2(F.relu(self.fc1(h_rnn_t)))
+            posterior_t = F.softmax(o_t, dim=1)
+            dist_t = torch.distributions.Categorical(posterior_t)
+            # Random sampling from categorical distribution
+            sample_t: Tensor = dist_t.sample()
+            # Reshape: [Batch] => [Batch, 1] (can be concatenated with [Batch, T])
+            sample_series = torch.cat((sample_series, sample_t.reshape((-1, 1))), dim=1)
+            # t => t-1
+            sample_t_minus_1 = sample_t
+            h_rnn_t_minus_1 = h_rnn_t
+            print(f"loop end: {torch.cuda.memory_allocated()}")
 
         return sample_series

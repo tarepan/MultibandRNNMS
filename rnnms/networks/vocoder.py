@@ -72,10 +72,6 @@ class RNN_MS_Vocoder(nn.Module):
             (Tensor(1, T_mel * hop_length)) Generated waveform. A sample point is in range [-1, 1].
         """
 
-        # todo: delete this debug hack
-        import torch
-        print(torch.cuda.memory_allocated())
-
         # Encoding for conditioning
         latents, _ = self.encoder(mel)
 

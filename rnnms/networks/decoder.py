@@ -134,7 +134,7 @@ class C_eAR_GenRNN(nn.Module):
                 # t => t-1
                 # sample_t_minus_1 = sample_t
                 print(f"sample t -> t-1: {torch.cuda.memory_allocated()}")
-                # h_rnn_t_minus_1 = h_rnn_t
+                h_rnn_t_minus_1 = h_rnn_t
                 # print(i)
                 # print(sample_series.size())
                 i = i+1

@@ -101,7 +101,8 @@ class C_eAR_GenRNN(nn.Module):
         sample_t_minus_1 = sample_t_minus_1.fill_(self.size_out // 2)
 
         with torch.no_grad():
-
+            self.fc1.eval()
+            self.fc2.eval()
             # Auto-regiressive sample series generation
             # separate speech-conditioning according to Time
             # [Batch, T_mel, freq] => [Batch, freq]
@@ -118,9 +119,7 @@ class C_eAR_GenRNN(nn.Module):
                 print(f"embedded: {torch.cuda.memory_allocated()}")
                 h_rnn_t = cell(torch.cat((i_embed_ar_t, i_cond_t), dim=1), h_rnn_t_minus_1)
                 print(f"cell executed: {torch.cuda.memory_allocated()}")
-                # o_t = self.fc2(F.relu(self.fc1(h_rnn_t)))
-                # todo: remove hack
-                # o_t = self.fc2(F.relu(self.fc1(h_rnn_t_minus_1)))
+                o_t = self.fc2(F.relu(self.fc1(h_rnn_t)))
                 print(f"output: {torch.cuda.memory_allocated()}")
                 # posterior_t = F.softmax(o_t, dim=1)
                 print(f"softmaxed: {torch.cuda.memory_allocated()}")

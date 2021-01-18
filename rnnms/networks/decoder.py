@@ -120,7 +120,7 @@ class C_eAR_GenRNN(nn.Module):
                 print(f"cell executed: {torch.cuda.memory_allocated()}")
                 # o_t = self.fc2(F.relu(self.fc1(h_rnn_t)))
                 # todo: remove hack
-                o_t = self.fc2(F.relu(self.fc1(h_rnn_t_minus_1)))
+                # o_t = self.fc2(F.relu(self.fc1(h_rnn_t_minus_1)))
                 print(f"output: {torch.cuda.memory_allocated()}")
                 # posterior_t = F.softmax(o_t, dim=1)
                 print(f"softmaxed: {torch.cuda.memory_allocated()}")

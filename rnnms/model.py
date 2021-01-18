@@ -71,8 +71,7 @@ class RNN_MS(pl.LightningModule):
         # o_G = self.training_step(batch, batch_idx, 0)
 
         # sample generation
-        with no_grad():
-            wave = self.rnnms.generate(mels)
+        wave = self.rnnms.generate(mels)
 
         # [-1, 1] restriction
         #   approach A: Clip (x>1 => x=1)

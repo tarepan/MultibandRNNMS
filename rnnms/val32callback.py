@@ -22,7 +22,6 @@ class Val32Callback(Callback):
         """
 
         if trainer.amp_backend is AMPType.NATIVE:
-            print("Validation-only FP32.")
             trainer.amp_backend_val_switching = True
             trainer.amp_backend = None
         else:
@@ -33,7 +32,6 @@ class Val32Callback(Callback):
         """
 
         if trainer.amp_backend_val_switching:
-            print("Back to native AMP.")
             trainer.amp_backend = AMPType.NATIVE
         else:
             pass

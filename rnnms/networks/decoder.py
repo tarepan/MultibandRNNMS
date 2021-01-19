@@ -99,7 +99,6 @@ class C_eAR_GenRNN(nn.Module):
 
         for i_cond_t in conditionings:
             # [Batch] => [Batch, size_i_embed_ar]
-            print(f"loop start: {torch.cuda.memory_allocated()}")
             i_embed_ar_t = self.embedding(sample_t_minus_1)
             h_rnn_t = cell(torch.cat((i_embed_ar_t, i_cond_t), dim=1), h_rnn_t_minus_1)
             o_t = self.fc2(F.relu(self.fc1(h_rnn_t)))
@@ -112,6 +111,5 @@ class C_eAR_GenRNN(nn.Module):
             # t => t-1
             sample_t_minus_1 = sample_t
             h_rnn_t_minus_1 = h_rnn_t
-            print(f"loop end: {torch.cuda.memory_allocated()}")
 
         return sample_series

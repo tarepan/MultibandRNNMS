@@ -1,6 +1,7 @@
 from argparse import ArgumentParser
 
 import pytorch_lightning
+import torchaudio
 
 from rnnms.args import parseArgments
 from rnnms.data.datamodule import DataLoaderPerformance, LJSpeechDataModule
@@ -10,6 +11,8 @@ from rnnms.train import train
 def main_train():
     """Train rnnms with cli arguments and the default dataset.
     """
+
+    torchaudio.set_audio_backend("sox_io")
 
     # Hardcoded hyperparams
     batch_size = 32

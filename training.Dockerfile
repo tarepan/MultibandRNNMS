@@ -14,6 +14,9 @@ RUN pip install git+https://github.com/tarepan/UniversalVocoding
 RUN pip uninstall -y torchaudio
 RUN pip install torchaudio==0.6.0
 
+# For TorchAudio
+RUN pip install SoundFile
+
 ENTRYPOINT ["python", "-m", "rnnms.main_train"]
 # use `CMD` override for arguments.
 #   c.f. [Understand how CMD and ENTRYPOINT interact](https://docs.docker.com/engine/reference/builder/#understand-how-cmd-and-entrypoint-interact)

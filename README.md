@@ -42,7 +42,7 @@ ToDO: Link super great impressive high-quatity audio demo.
 For arguments, check [./rnnms/args.py](https://github.com/tarepan/UniversalVocoding/blob/main/rnnms/args.py)  
 
 ### preprocessing <!-- omit in toc -->
-"Bbatteries Included" 😉  
+"Batteries Included" 😉  
 `dataset` transparently download corpus and preprocess it for you.  
 
 ### Custom dataset <!-- omit in toc -->

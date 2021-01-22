@@ -11,6 +11,7 @@ FROM nvidia/cuda:11.1.1-cudnn8-runtime
 # For pip install through git
 RUN apt-get update && apt-get install -y git
 
+RUN apt install -y python3-pip
 RUN pip install torch==1.7.1+cu110 torchaudio===0.7.2 -f https://download.pytorch.org/whl/torch_stable.html
 
 RUN pip install git+https://github.com/tarepan/UniversalVocoding

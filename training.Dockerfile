@@ -8,7 +8,7 @@ FROM pytorch/pytorch:1.6.0-cuda10.1-cudnn7-runtime
 # For pip install through git
 RUN apt-get update && apt-get install -y git
 
-RUN pip3 install git+https://github.com/tarepan/UniversalVocoding
+RUN pip install git+https://github.com/tarepan/UniversalVocoding
 
 # For Torch==1.6.0
 RUN pip uninstall -y torchaudio

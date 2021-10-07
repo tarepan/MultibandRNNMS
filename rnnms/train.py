@@ -11,7 +11,6 @@ from pytorch_lightning.core.datamodule import LightningDataModule
 from pytorch_lightning.utilities.cloud_io import get_filesystem
 
 from .model import RNN_MS
-from .val32callback import Val32Callback
 
 
 def train(args: Namespace, datamodule: LightningDataModule) -> None:
@@ -41,7 +40,7 @@ def train(args: Namespace, datamodule: LightningDataModule) -> None:
         logger=pl_loggers.TensorBoardLogger(
             ckptAndLogging.save_dir, ckptAndLogging.name, ckptAndLogging.version
         ),
-        callbacks=[ckpt_cb, Val32Callback()],
+        callbacks=[ckpt_cb],
         # reload_dataloaders_every_epoch=True,
         profiler=args.profiler,
         progress_bar_refresh_rate=30

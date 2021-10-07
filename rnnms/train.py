@@ -1,6 +1,7 @@
 from argparse import Namespace
 from typing import Optional
 import os
+from datetime import timedelta
 
 import torch
 import pytorch_lightning as pl
@@ -20,7 +21,13 @@ def train(args: Namespace, datamodule: LightningDataModule) -> None:
     # setup
     gpus: int = 1 if torch.cuda.is_available() else 0  # single GPU or CPU
     model = RNN_MS()
-    ckpt_cb = ModelCheckpoint(period=60, save_last=True, save_top_k=1, monitor="val_loss")
+    
+    ckpt_cb = ModelCheckpoint(
+        train_time_interval=timedelta(minutes=15),
+        save_last=True,
+        save_top_k=1,
+        monitor="val_loss"
+    )
     trainer = pl.Trainer(
         gpus=gpus,
         auto_select_gpus=True,

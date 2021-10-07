@@ -58,7 +58,7 @@ Copy [`rnnms.main_train`] and replace DataModule.
 
 ## System Details
 ### Model <!-- omit in toc -->
-- Encoder: 2-layer bidi-GRU (so that no time-directional compression)
+- PreNet: 2-layer bidi-GRU (so that no time-directional compression)
 - Upsampler: x200 time-directional latent upsampling with interpolation
 - Decoder: Latent-conditional, embedded-auto-regressive generative RNN with 10-bit μ-law encoding
 
@@ -117,7 +117,7 @@ Eprint = {arXiv:1811.06292},
 
 ## Dependency Notes <!-- omit in toc -->
 ### PyTorch version <!-- omit in toc -->
-PyTorch version: PyTorch v1.6 is working (We checked with v1.6.0).  
+PyTorch version: PyTorch v1.9 is working (We checked with v1.9.0).  
 
 For dependency resolution, we do **NOT** explicitly specify the compatible versions.  
 PyTorch have several distributions for various environment (e.g. compatible CUDA version.)  

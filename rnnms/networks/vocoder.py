@@ -34,8 +34,10 @@ class RNN_MS_Vocoder(nn.Module):
         super().__init__()
         self.hop_length = hop_length
 
-        self.encoder = nn.GRU(size_mel_freq, size_latent, num_layers=2, batch_first=True, bidirectional=True)
-        self.decoder = C_eAR_GenRNN(size_latent, size_embed_ar, size_rnn_h, size_fc_h, 2**bits_mu_law)
+        # PreNet which transform conditioning inputs into latent representation
+        self.prenet = nn.GRU(size_mel_freq, size_latent, num_layers=2, batch_first=True, bidirectional=True)
+        # AR which yeild sample probability autoregressively
+        self.ar = C_eAR_GenRNN(size_latent, size_embed_ar, size_rnn_h, size_fc_h, 2**bits_mu_law)
         self.mulaw_dec = MuLawDecoding(2**bits_mu_law)
 
     def forward(self, wave_mu_law: Tensor, mels: Tensor) -> Tensor:
@@ -48,16 +50,16 @@ class RNN_MS_Vocoder(nn.Module):
         Returns:
             Tensor(Batch, Time, before_softmax) Generated mu-law encoded waveform
         """
-        # Encoding for conditioning
+        # Latent representation
         # Tensor(batch, T_mel, 2*size_latent)
-        latents, _ = self.encoder(mels)
+        latents, _ = self.prenet(mels)
 
         # Cond. Upsampling
         # Tensor(batch, T_mel*hop_length, 2*size_latent)
         latents_upsampled: Tensor = F.interpolate(latents.transpose(1, 2), scale_factor=self.hop_length).transpose(1, 2)
 
         # Autoregressive
-        bits_energy_series = self.decoder(wave_mu_law, latents_upsampled)
+        bits_energy_series = self.ar(wave_mu_law, latents_upsampled)
 
         return bits_energy_series
 
@@ -72,14 +74,12 @@ class RNN_MS_Vocoder(nn.Module):
             (Tensor(1, T_mel * hop_length)) Generated waveform. A sample point is in range [-1, 1].
         """
 
-        # Encoding for conditioning
-        latents, _ = self.encoder(mel)
-
-        # Cond. Upsampling
+        # Transform conditionings into upsampled latents
+        latents, _ = self.prenet(mel)
         latents_upsampled: Tensor = F.interpolate(latents.transpose(1, 2), scale_factor=self.hop_length).transpose(1, 2)
 
-        # Autoregressive
-        output_mu_law = self.decoder.generate(latents_upsampled)
+        # Sample a waveform (sequence of μ-law encoded samples)
+        output_mu_law = self.ar.generate(latents_upsampled)
 
         # μ-law expansion.
         # range: [0, 2^bit -1] => [-1, 1]

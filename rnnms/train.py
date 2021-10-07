@@ -8,6 +8,7 @@ import pytorch_lightning as pl
 from pytorch_lightning import loggers as pl_loggers
 from pytorch_lightning.callbacks import ModelCheckpoint
 from pytorch_lightning.core.datamodule import LightningDataModule
+from pytorch_lightning.utilities.cloud_io import get_filesystem
 
 from .model import RNN_MS
 from .val32callback import Val32Callback
@@ -68,8 +69,8 @@ class CheckpointAndLogging:
     save_dir: str
     name: str
     version: str
-    # [PL's ModelCheckpoint callback](https://pytorch-lightning.readthedocs.io/en/stable/generated/pytorch_lightning.callbacks.ModelCheckpoint.html#pytorch_lightning.callbacks.ModelCheckpoint)
-    # inferred from above two
+    # [PL's ModelCheckpoint](https://pytorch-lightning.readthedocs.io/en/stable/generated/pytorch_lightning.callbacks.ModelCheckpoint.html#pytorch_lightning.callbacks.ModelCheckpoint)
+    # dirpath: Implicitly inferred from `default_root_dir`, `name` and `version` by PyTorch-Lightning
 
     def __init__(
         self,
@@ -79,10 +80,13 @@ class CheckpointAndLogging:
         name_ckpt: str = "last.ckpt",
     ) -> None:
 
-        # ModelCheckpoint
+        path_ckpt = os.path.join(dir_root, name_exp, name_version, "checkpoints", name_ckpt)
+
+        # PL's Trainer
         self.default_root_dir = dir_root
-        self.resume_from_checkpoint = os.path.join(dir_root, name_exp, name_version, "checkpoints", name_ckpt)
-        # TensorBoardLogger
+        self.resume_from_checkpoint = path_ckpt if get_filesystem(path_ckpt).exists(path_ckpt) else None
+
+        # TB's TensorBoardLogger
         self.save_dir = dir_root
         self.name = name_exp
         self.version = name_version

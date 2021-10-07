@@ -24,7 +24,7 @@ def train(args: Namespace, datamodule: LightningDataModule) -> None:
     trainer = pl.Trainer(
         gpus=gpus,
         auto_select_gpus=True,
-        precision=32 if args.no_amp else 16,
+        precision=16,
         max_epochs=args.max_epochs,
         check_val_every_n_epoch=args.val_interval_epoch,
         # logging/checkpointing

@@ -15,7 +15,6 @@ def parseArgments(
     parser.add_argument("--name_version", default="version_-1", type=str)
     #
     parser.add_argument("--max_epochs", default=500, type=int)
-    parser.add_argument("--no_amp", action="store_true")
     parser.add_argument("--val_interval_epoch", default=4, type=int)
     parser.add_argument("--adress_data_root", type=str)
     # DataLoaderPerformance

@@ -17,16 +17,17 @@ def train(args: Namespace, datamodule: LightningDataModule) -> None:
     """Train RNN_MS on PyTorch-Lightning.
     """
 
+    # [todo]: Use snake_case
     ckptAndLogging = CheckpointAndLogging(args.dir_root, args.name_exp, args.name_version)
     # setup
     gpus: int = 1 if torch.cuda.is_available() else 0  # single GPU or CPU
     model = RNN_MS()
-    
+
+    # Save checkpoint as `last.ckpt` every 15 minutes.
     ckpt_cb = ModelCheckpoint(
         train_time_interval=timedelta(minutes=15),
         save_last=True,
-        save_top_k=1,
-        monitor="val_loss"
+        save_top_k=0,
     )
     trainer = pl.Trainer(
         gpus=gpus,

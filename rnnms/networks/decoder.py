@@ -1,7 +1,10 @@
+from dataclasses import dataclass
+
 import torch
 from torch import Tensor
 import torch.nn as nn
 import torch.nn.functional as F
+from omegaconf import MISSING
 
 
 def get_gru_cell(gru):
@@ -16,6 +19,22 @@ def get_gru_cell(gru):
     return gru_cell
 
 
+@dataclass
+class ConfC_eAR_GenRNN:
+    """Configuration of C_eAR_GenRNN.
+    Args:
+        size_i_cnd: size of conditioning input vector
+        size_i_embed_ar: size of embedded auto-regressive input vector (embedded sample_t-1)
+        size_h_rnn: size of RNN hidden vector
+        size_h_fc: size of 2-layer FC's hidden layer
+        size_o: size of output energy vector
+    """
+    size_i_cnd: int = MISSING
+    size_i_embed_ar: int = MISSING
+    size_h_rnn: int = MISSING
+    size_h_fc: int = MISSING
+    size_o_bit: int = MISSING
+
 class C_eAR_GenRNN(nn.Module):
     """Latent-conditional, embedded-auto-regressive Generative RNN.
 
@@ -25,30 +44,20 @@ class C_eAR_GenRNN(nn.Module):
     Alternative implementation: embedding => one-hot
     """
 
-    def __init__(self, size_i_cnd: int, size_i_embed_ar: int, size_h_rnn: int, size_h_fc: int, size_o: int) -> None:
-        """Set up the hyperparams.
-
-        Args:
-            size_i_cnd: size of conditioning input vector
-            size_i_embed_ar: size of embedded auto-regressive input vector (embedded sample_t-1)
-            size_h_rnn: size of RNN hidden vector
-            size_h_fc: size of 2-layer FC's hidden layer
-            size_o: size of output energy vector
-        """
-
+    def __init__(self, conf: ConfC_eAR_GenRNN) -> None:
         super().__init__()
 
         # output embedding
-        self.size_out = size_o
-        self.embedding = nn.Embedding(size_o, size_i_embed_ar)
+        self.size_out = 2**conf.size_o_bit
+        self.embedding = nn.Embedding(self.size_out, conf.size_i_embed_ar)
 
         # RNN module
-        self.size_h_rnn = size_h_rnn
-        self.rnn = nn.GRU(size_i_embed_ar + 2 * size_i_cnd, size_h_rnn, batch_first=True)
+        self.size_h_rnn = conf.size_h_rnn
+        self.rnn = nn.GRU(conf.size_i_embed_ar + 2 * conf.size_i_cnd, conf.size_h_rnn, batch_first=True)
 
         # RNN_out -> μ-law bits energy
-        self.fc1 = nn.Linear(size_h_rnn, size_h_fc)
-        self.fc2 = nn.Linear(size_h_fc, size_o)
+        self.fc1 = nn.Linear(conf.size_h_rnn, conf.size_h_fc)
+        self.fc2 = nn.Linear(conf.size_h_fc, self.size_out)
 
     def forward(self, reference_sample: Tensor, i_cnd_series: Tensor) -> Tensor:
         """Forward for training.

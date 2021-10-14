@@ -11,9 +11,9 @@ python = "^3.7"
 torch = "*"
 torchaudio = "^0.9.0"
 pytorch-lightning = "^1.4.9"
-fsspec = {extras = ["http", "s3"], version = "^0.8.4"}
+fsspec = {version = ">=2021.5", extras = ["http", "s3"]}
 boto3 = "^1.16.18"
-numpy = "^1.16"
+numpy = ">=1.17"
 corpuspy = {git = "https://github.com/tarepan/corpuspy.git", rev = "main"}
 pyloudnorm = "^0.1.0"
 librosa = "^0.8.0"

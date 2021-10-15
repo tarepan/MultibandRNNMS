@@ -10,32 +10,18 @@ from omegaconf import MISSING
 
 from .networks.vocoder import RNN_MS_Vocoder, ConfRNN_MS_Vocoder
 
-"""
-    sampling_rate: 16000
-    vocoder:
-        size_mel_freq: 80
-        size_latent: 128
-        bits_mu_law: 10
-        hop_length: 200
-        wave_ar:
-            # size_i_cnd: local sync
-            size_i_embed_ar: 256
-            size_h_rnn: 896
-            size_h_fc: 1024
-            # size_o_bit: local sync
-    optim:
-        learning_rate: 4.0 * 1e-4
-        sched_decay_rate: 0.5
-        sched_decay_step: 25000
-"""
 
 @dataclass
 class ConfOptim:
     """Configuration of optimizer.
+    Args:
+        learning_rate: Optimizer learning rate
+        sched_decay_rate: LR shaduler decay rate
+        sched_decay_step: LR shaduler decay step
     """
-    learning_rate: float = MISSING     # Optimizer learning rate
-    sched_decay_rate: float = MISSING  # LR shaduler decay rate
-    sched_decay_step: int = MISSING    # LR shaduler decay step
+    learning_rate: float = MISSING
+    sched_decay_rate: float = MISSING
+    sched_decay_step: int = MISSING
 
 @dataclass
 class ConfRNN_MS:

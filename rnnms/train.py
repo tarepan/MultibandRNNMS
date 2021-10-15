@@ -15,41 +15,6 @@ from omegaconf import MISSING
 from .model import RNN_MS, ConfRNN_MS
 
 
-"""
-seed: 1234
-data:
-    batch_size: 32
-    num_workers: int = MISSING
-    pin_memory: bool = MISSING
-    adress_data_root: str = MISSING
-train:
-    ckptLog:
-        dir_root: logs
-        name_exp: default
-        name_version: version_-1
-    trainer:
-        max_epochs: 500
-        val_interval_epoch: 4
-        profiler:
-    model:
-        sampling_rate: 16000
-        vocoder:
-            size_mel_freq: 80
-            size_latent: 128
-            bits_mu_law: 10
-            hop_length: 200
-            wave_ar:
-                # size_i_cnd: local sync
-                size_i_embed_ar: 256
-                size_h_rnn: 896
-                size_h_fc: 1024
-                # size_o_bit: local sync
-        optim:
-            learning_rate: 4.0 * 1e-4
-            sched_decay_rate: 0.5
-            sched_decay_step: 25000
-"""
-
 class Profiler(Enum):
     SIMPLE = "simple"
     ADVANCED = "advanced"
@@ -58,18 +23,22 @@ class Profiler(Enum):
 @dataclass
 class ConfTrainer:
     """Configuration of trainer.
+    Args:
+        max_epochs: Number of maximum training epoch
+        val_interval_epoch: Interval epoch between validation
+        profiler: Profiler setting
     """
     max_epochs: int = MISSING
     val_interval_epoch: int = MISSING
-    profiler: Profiler = MISSING
+    profiler: Optional[Profiler] = MISSING
 
 @dataclass
 class ConfCkptLog:
     """Configuration of checkpointing and logging.
     """
-    dir_root = MISSING
-    name_exp = MISSING
-    name_version = MISSING
+    dir_root: str = MISSING
+    name_exp: str  = MISSING
+    name_version: str  = MISSING
 
 @dataclass
 class ConfTrain:
@@ -78,6 +47,7 @@ class ConfTrain:
     ckpt_log: ConfCkptLog = ConfCkptLog()
     trainer: ConfTrainer = ConfTrainer()
     model: ConfRNN_MS = ConfRNN_MS()
+
 
 def train(conf: ConfTrain, datamodule: LightningDataModule) -> None:
     """Train RNN_MS on PyTorch-Lightning.

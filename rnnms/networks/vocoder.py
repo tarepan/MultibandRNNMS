@@ -12,11 +12,16 @@ from .decoder import C_eAR_GenRNN, ConfC_eAR_GenRNN
 @dataclass
 class ConfRNN_MS_Vocoder:
     """Configuration of RNN_MS_Vocoder.
+    Args:
+    size_mel_freq: Dimension of mel frequency
+    size_latent: Dimension of latent vector
+    bits_mu_law: Bit depth of μ-law encoding
+    hop_length: STFT stride
     """
-    size_mel_freq: int = MISSING # Dimension of mel frequency
-    size_latent: int = MISSING   # Dimension of latent vector
-    bits_mu_law: int = MISSING   # Bit depth of μ-law encoding
-    hop_length: int = MISSING    # STFT stride
+    size_mel_freq: int = MISSING
+    size_latent: int = MISSING
+    bits_mu_law: int = MISSING
+    hop_length: int = MISSING
     wave_ar: ConfC_eAR_GenRNN = ConfC_eAR_GenRNN(size_i_cnd="${..size_latent}", size_o_bit="${..bits_mu_law}")
 
 class RNN_MS_Vocoder(nn.Module):

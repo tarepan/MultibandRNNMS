@@ -1,5 +1,5 @@
 from typing import Callable, TypeVar
-from omegaconf import OmegaConf
+from omegaconf import OmegaConf, SCMode
 
 from .main_train import ConfGlobal
 
@@ -64,9 +64,25 @@ def gen_load_conf(gen_conf_default: Callable[[], T], ) -> Callable[[], T]:
         extends_path = cli.get("path_extend_conf", None)
         if extends_path:
             extends = OmegaConf.load(extends_path)
-            return OmegaConf.merge(default, extends, cli)
+            conf_final = OmegaConf.merge(default, extends, cli)
         else:
-            return OmegaConf.merge(default, cli)
+            conf_final = OmegaConf.merge(default, cli)
+
+        # Design Note -- OmegaConf instance v.s. DataClass instance --
+        #   OmegaConf instance has runtime overhead in exchange for type safety.
+        #   Configuration is constructed/finalized in early stage,
+        #   so config is eternally valid after validation in last step of early stage.
+        #   As a result, we can safely convert OmegaConf to DataClass after final validation.
+        #   This prevent (unnecessary) runtime overhead in later stage.
+        #
+        #   One demerit: No "freeze" mechanism in instantiated dataclass.
+        #   If OmegaConf, we have `OmegaConf.set_readonly(conf_final, True)`
+
+        # [todo]: Return both dataclass and OmegaConf because OmegaConf has export-related utils.
+
+        # `.to_container()` with `SCMode.INSTANTIATE` resolve interpolations and check MISSING.
+        # It is equal to whole validation.
+        return OmegaConf.to_container(conf_final, structured_config_mode=SCMode.INSTANTIATE)
 
     return generated_load_conf
 

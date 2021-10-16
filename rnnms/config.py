@@ -6,12 +6,12 @@ from .main_train import ConfGlobal
 
 CONF_DEFAULT_STR = """
 seed: 1234
-path_extend_conf: None
+path_extend_conf: null
 data:
     batch_size: 32
-    num_workers: None
-    pin_memory: None
-    adress_data_root: None
+    num_workers: null
+    pin_memory: null
+    adress_data_root: null
 train:
     ckptLog:
         dir_root: logs
@@ -20,7 +20,7 @@ train:
     trainer:
         max_epochs: 500
         val_interval_epoch: 4
-        profiler: None
+        profiler: null
     model:
         sampling_rate: 16000
         vocoder:

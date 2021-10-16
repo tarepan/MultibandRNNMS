@@ -3,17 +3,44 @@ from dataclasses import dataclass
 
 from omegaconf import OmegaConf, SCMode, MISSING
 
+from .data.datamodule import ConfData
 from .train import ConfTrain
 
 
 CONF_DEFAULT_STR = """
 seed: 1234
 path_extend_conf: null
+target_sr: 16000
+bits_mulaw: 10
+dim_mel: 80
+stride_stft: 200
 data:
-    batch_size: 32
-    num_workers: null
-    pin_memory: null
-    adress_data_root: null
+    loader:
+        batch_size: 32
+        num_workers: null
+        pin_memory: null
+    dataset:
+        adress_data_root: null
+        clip_length_mel: 24
+        mel_stft_stride: "${stride_stft}"
+        corpus:
+            # mirror_root: local sync
+            download: False
+        preprocess:
+            target_sr: "${target_sr}"
+            # stft_hop_length: local sync
+            win_length: 800
+            bits_mulaw: "${bits_mulaw}"
+            melspec:
+                # sr: local sync
+                n_fft: 2048
+                # hop_length: local sync
+                # win_length: local sync
+                preemph: 0.97
+                top_db: 80.0
+                ref_db: 20.0
+                n_mels: "${dim_mel}"
+                fmin: 50
 train:
     ckpt_log:
         dir_root: logs
@@ -24,12 +51,12 @@ train:
         val_interval_epoch: 4
         profiler: null
     model:
-        sampling_rate: 16000
+        sampling_rate: "${target_sr}"
         vocoder:
-            size_mel_freq: 80
+            size_mel_freq: "${dim_mel}"
             size_latent: 128
-            bits_mu_law: 10
-            hop_length: 200
+            bits_mu_law: "${bits_mulaw}"
+            hop_length: "${stride_stft}"
             wave_ar:
                 # size_i_cnd: local sync
                 size_i_embed_ar: 256
@@ -42,19 +69,6 @@ train:
             sched_decay_step: 25000
 """
 
-@dataclass
-class ConfData:
-    """Configuration of data.
-    Args:
-        batch_size: Number of datum in a batch
-        num_workers: Number of data loader worker
-        pin_memory: Use data loader pin_memory
-        adress_data_root: Root adress of data
-    """
-    batch_size: int = MISSING
-    num_workers: Optional[int] = MISSING
-    pin_memory: Optional[bool] = MISSING
-    adress_data_root: Optional[str] = MISSING
 
 @dataclass
 class ConfGlobal:
@@ -62,9 +76,17 @@ class ConfGlobal:
     Args:
         seed: PyTorch-Lightning's seed for every random system
         path_extend_conf: Path of configuration yaml which extends default config
+        target_sr: Desired sampling rate of waveform
+        bits_mulaw: Bit depth of μ-law compressed waveform
+        dim_mel: Dimension of mel-spectrogram
+        stride_stft: STFT stride
     """
     seed: int = MISSING
     path_extend_conf: Optional[str] = MISSING
+    target_sr: int = MISSING
+    bits_mulaw: int = MISSING
+    dim_mel: int = MISSING
+    stride_stft: int = MISSING
     data: ConfData = ConfData()
     train: ConfTrain = ConfTrain()
 

@@ -1,9 +1,10 @@
 from typing import List, NamedTuple, Optional
 from pathlib import Path
+from dataclasses import dataclass
 
 from corpuspy.interface import AbstractCorpus
 from corpuspy.helper.contents import get_contents
-
+from omegaconf import MISSING
 
 # Mode = Literal[Longform, Shortform, "simplification", "summarization"] # >=Python3.8
 Subtype = int
@@ -18,42 +19,56 @@ class ItemIdLJSpeech(NamedTuple):
     serial_num: int
 
 
+@dataclass
+class ConfCorpus:
+    """Configuration of corpus.
+
+    Args:
+        mirror_root: Root adress from/to which corpus mirror will be loaded/saved. If None, use default.
+        download: Whether download original corpus or not when dataset and mirror archive are not found.
+    """
+    mirror_root: Optional[str] = None # MISSING
+    download: bool = False # MISSING
+
 class LJSpeech(AbstractCorpus[ItemIdLJSpeech]):
     """LJSpeech corpus.
     
     Archive/contents handler of LJSpeech corpus.
+    Corpus consists of 'archive' and 'contents'.
     """
     
-    def __init__(self, adress: Optional[str] = None, download_origin: bool = False) -> None:
+    def __init__(self, conf: ConfCorpus) -> None:
         """Initiate LJSpeech with archive options.
-        Args:
-            adress: Corpus archive adress (e.g. path, S3) from/to which archive will be read/written through `fsspec`.
-            download_origin: Download original corpus when there is no corpus in local and specified adress.
         """
+
+        self.conf = conf
 
         ver: str = "1.1"
         # Equal to 1st layer directory name of original zip.
         self._corpus_name: str = f"LJSpeech-{ver}"
+
         self._origin_adress = f"https://data.keithito.com/data/speech/{self._corpus_name}.tar.bz2"
-
         dir_corpus_local: str = "./data/corpuses/LJSpeech/"
-        default_path_archive = str((Path(dir_corpus_local) / "archive" / f"{self._corpus_name}.tar.bz2").resolve())
-        self._path_contents_local = Path(dir_corpus_local) / "contents"
-        self._adress = adress if adress else default_path_archive
 
-        self._download_origin = download_origin
+        # Archive
+        adress_archive_mirror = f"{conf.mirror_root}/corpuses/{self._corpus_name}.tar.bz2" if conf.mirror_root else None
+        default_archive_mirror = str((Path(dir_corpus_local) / "archive" / f"{self._corpus_name}.tar.bz2").resolve())
+        self._adress_mirror = adress_archive_mirror if adress_archive_mirror else default_archive_mirror
+
+        # Contents
+        self._path_contents_local = Path(dir_corpus_local) / "contents"
 
     def get_contents(self) -> None:
         """Get corpus contents into local.
         """
 
-        get_contents(self._adress, self._path_contents_local, self._download_origin, self.forward_from_origin)
+        get_contents(self._adress_mirror, self._path_contents_local, self.conf.download, self.forward_from_origin)
 
     def forward_from_origin(self) -> None:
         """Forward original corpus archive to the adress.
         """
 
-        forward_from_general(self._origin_adress, self._adress)
+        forward_from_general(self._origin_adress, self._adress_mirror)
 
     def get_identities(self) -> List[ItemIdLJSpeech]:
         """Get corpus item identities.

@@ -15,7 +15,7 @@ data:
     pin_memory: null
     adress_data_root: null
 train:
-    ckptLog:
+    ckpt_log:
         dir_root: logs
         name_exp: default
         name_version: version_-1

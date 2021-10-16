@@ -1,7 +1,9 @@
-from typing import Callable, TypeVar
-from omegaconf import OmegaConf, SCMode
+from typing import Callable, TypeVar, Optional
+from dataclasses import dataclass
 
-from .main_train import ConfGlobal
+from omegaconf import OmegaConf, SCMode, MISSING
+
+from .train import ConfTrain
 
 
 CONF_DEFAULT_STR = """
@@ -39,6 +41,33 @@ train:
             sched_decay_rate: 0.5
             sched_decay_step: 25000
 """
+
+@dataclass
+class ConfData:
+    """Configuration of data.
+    Args:
+        batch_size: Number of datum in a batch
+        num_workers: Number of data loader worker
+        pin_memory: Use data loader pin_memory
+        adress_data_root: Root adress of data
+    """
+    batch_size: int = MISSING
+    num_workers: Optional[int] = MISSING
+    pin_memory: Optional[bool] = MISSING
+    adress_data_root: Optional[str] = MISSING
+
+@dataclass
+class ConfGlobal:
+    """Configuration of everything.
+    Args:
+        seed: PyTorch-Lightning's seed for every random system
+        path_extend_conf: Path of configuration yaml which extends default config
+    """
+    seed: int = MISSING
+    path_extend_conf: Optional[str] = MISSING
+    data: ConfData = ConfData()
+    train: ConfTrain = ConfTrain()
+
 
 def conf_default() -> ConfGlobal:
     """Default global configuration.

@@ -17,6 +17,7 @@ numpy = ">=1.17"
 corpuspy = {git = "https://github.com/tarepan/corpuspy.git", rev = "main"}
 pyloudnorm = "^0.1.0"
 librosa = "^0.8.0"
+omegaconf = "^2.1.1"
 
 [tool.poetry.dev-dependencies]
 

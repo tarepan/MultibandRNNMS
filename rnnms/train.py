@@ -1,7 +1,8 @@
-from argparse import Namespace
 from typing import Optional
+from enum import Enum
 import os
 from datetime import timedelta
+from dataclasses import dataclass
 
 import torch
 import pytorch_lightning as pl
@@ -9,19 +10,53 @@ from pytorch_lightning import loggers as pl_loggers
 from pytorch_lightning.callbacks import ModelCheckpoint
 from pytorch_lightning.core.datamodule import LightningDataModule
 from pytorch_lightning.utilities.cloud_io import get_filesystem
+from omegaconf import MISSING
 
-from .model import RNN_MS
+from .model import RNN_MS, ConfRNN_MS
 
 
-def train(args: Namespace, datamodule: LightningDataModule) -> None:
+class Profiler(Enum):
+    SIMPLE = "simple"
+    ADVANCED = "advanced"
+
+
+@dataclass
+class ConfTrainer:
+    """Configuration of trainer.
+    Args:
+        max_epochs: Number of maximum training epoch
+        val_interval_epoch: Interval epoch between validation
+        profiler: Profiler setting
+    """
+    max_epochs: int = MISSING
+    val_interval_epoch: int = MISSING
+    profiler: Optional[Profiler] = MISSING
+
+@dataclass
+class ConfCkptLog:
+    """Configuration of checkpointing and logging.
+    """
+    dir_root: str = MISSING
+    name_exp: str  = MISSING
+    name_version: str  = MISSING
+
+@dataclass
+class ConfTrain:
+    """Configuration of train.
+    """
+    ckpt_log: ConfCkptLog = ConfCkptLog()
+    trainer: ConfTrainer = ConfTrainer()
+    model: ConfRNN_MS = ConfRNN_MS()
+
+
+def train(conf: ConfTrain, datamodule: LightningDataModule) -> None:
     """Train RNN_MS on PyTorch-Lightning.
     """
 
     # [todo]: Use snake_case
-    ckptAndLogging = CheckpointAndLogging(args.dir_root, args.name_exp, args.name_version)
+    ckpt_and_logging = CheckpointAndLogging(conf.ckpt_log.dir_root, conf.ckpt_log.name_exp, conf.ckpt_log.name_version)
     # setup
-    gpus: int = 1 if torch.cuda.is_available() else 0  # single GPU or CPU
-    model = RNN_MS()
+    model = RNN_MS(conf.model)
 
     # Save checkpoint as `last.ckpt` every 15 minutes.
     ckpt_cb = ModelCheckpoint(
@@ -29,21 +64,22 @@ def train(args: Namespace, datamodule: LightningDataModule) -> None:
         save_last=True,
         save_top_k=0,
     )
+
     trainer = pl.Trainer(
-        gpus=gpus,
+        gpus=1 if torch.cuda.is_available() else 0,
         auto_select_gpus=True,
         precision=16,
-        max_epochs=args.max_epochs,
-        check_val_every_n_epoch=args.val_interval_epoch,
+        max_epochs=conf.trainer.max_epochs,
+        check_val_every_n_epoch=conf.trainer.val_interval_epoch,
         # logging/checkpointing
-        resume_from_checkpoint=ckptAndLogging.resume_from_checkpoint,
-        default_root_dir=ckptAndLogging.default_root_dir,
+        resume_from_checkpoint=ckpt_and_logging.resume_from_checkpoint,
+        default_root_dir=ckpt_and_logging.default_root_dir,
         logger=pl_loggers.TensorBoardLogger(
-            ckptAndLogging.save_dir, ckptAndLogging.name, ckptAndLogging.version
+            ckpt_and_logging.save_dir, ckpt_and_logging.name, ckpt_and_logging.version
         ),
         callbacks=[ckpt_cb],
         # reload_dataloaders_every_epoch=True,
-        profiler=args.profiler,
+        profiler=conf.trainer.profiler,
         progress_bar_refresh_rate=30
     )
 

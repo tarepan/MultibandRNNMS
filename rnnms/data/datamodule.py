@@ -13,7 +13,7 @@ class DataLoaderPerformance:
     [^DataLoader]:https://pytorch.org/docs/stable/data.html#torch.utils.data.DataLoader
     """
 
-    def __init__(self, num_workers: Optional[int] = None, pin_memory: bool = True) -> None:
+    def __init__(self, num_workers: Optional[int] = None, pin_memory: Optional[bool] = None) -> None:
         """Default: num_workers == cpu_count & pin_memory == True
         """
 
@@ -25,7 +25,7 @@ class DataLoaderPerformance:
             c = cpu_count()
             num_workers = c if c is not None else 0
         self.num_workers: int = num_workers
-        self.pin_memory: bool = pin_memory
+        self.pin_memory: bool = pin_memory if pin_memory is not None else True
 
 
 class LJSpeechDataModule(LightningDataModule):

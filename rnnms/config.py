@@ -37,7 +37,7 @@ train:
                 size_h_fc: 1024
                 # size_o_bit: local sync
         optim:
-            learning_rate: 4.0 * 1e-4
+            learning_rate: 4.0e-4
             sched_decay_rate: 0.5
             sched_decay_step: 25000
 """

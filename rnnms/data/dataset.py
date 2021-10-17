@@ -66,7 +66,7 @@ class LJSpeech_mel_mulaw(Dataset):
         # Archive: placed in given adress (conf) or default adress (local dataset directory)
         adress_archive_given = f"{archive_root}/datasets/LJSpeech/{archive_name}" if archive_root else None
         adress_archive_default = str(local_root/"archive"/archive_name)
-        adress_archive = adress_archive_given if adress_archive_given else adress_archive_default
+        adress_archive = adress_archive_given or adress_archive_default
 
         # Contents: contents are extracted in local dataset directory
         self._path_contents = local_root/"contents"/arg_hash

@@ -60,7 +60,7 @@ class LJSpeech(AbstractCorpus[ItemIdLJSpeech]):
         # Mirror: placed in given adress (conf) or default adress (local corpus directory)
         adress_mirror_given = f"{mirror_root}/corpuses/{archive_name}" if mirror_root else None
         adress_mirror_default = str((local_root / "corpuses" / "LJSpeech" / "archive" / archive_name).resolve())
-        self._adress_mirror = adress_mirror_given if adress_mirror_given else adress_mirror_default
+        self._adress_mirror = adress_mirror_given or adress_mirror_default
 
         # Contents: contents are extracted in local corpus directory
         self._path_contents = local_root / "corpuses" / "LJSpeech" / "contents"

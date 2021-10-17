@@ -51,17 +51,20 @@ class C_eAR_GenRNN(nn.Module):
         self.size_out = 2**conf.size_o_bit
         self.embedding = nn.Embedding(self.size_out, conf.size_i_embed_ar)
 
-        # RNN module
+        # RNN module: Embedded_sample_t-1 + latent_t-1 => hidden_t
         self.size_h_rnn = conf.size_h_rnn
         self.rnn = nn.GRU(conf.size_i_embed_ar + conf.size_i_cnd, conf.size_h_rnn, batch_first=True)
 
-        # RNN_out -> μ-law bits energy
-        self.fc1 = nn.Linear(conf.size_h_rnn, conf.size_h_fc)
-        self.fc2 = nn.Linear(conf.size_h_fc, self.size_out)
+        # FC module: RNN_out => μ-law bits energy
+        self.fc = nn.Sequential(
+            nn.Linear(conf.size_h_rnn, conf.size_h_fc),
+            nn.ReLU(),
+            nn.Linear(conf.size_h_fc, self.size_out),
+        )
 
     def forward(self, reference_sample: Tensor, i_cnd_series: Tensor) -> Tensor:
         """Forward for training.
-        
+
         Forward RNN computation for training.
         This is for training, so there is no sampling.
         For training, auto-regressive input is replaced by self-supervised input (`reference_sample`).
@@ -69,7 +72,7 @@ class C_eAR_GenRNN(nn.Module):
         Args:
             reference_sample: Reference sample (series) for for self-supervised learning
             i_cnd_series (Tensor(Batch, Time, dim_latent)): conditional input vector series
-        
+
         Returns:
             (Tensor(Batch, Time, 2*bits)) Series of output energy vector
         """
@@ -77,7 +80,7 @@ class C_eAR_GenRNN(nn.Module):
         # Embed whole reference series (non-AR) because this is training.
         sample_ref_emb = self.embedding(reference_sample)
         o_rnn, _ = self.rnn(torch.cat((sample_ref_emb, i_cnd_series), dim=2))
-        o = self.fc2(F.relu(self.fc1(o_rnn)))
+        o = self.fc(o_rnn)
         return o
 
     def generate(self, i_cnd_series: Tensor) -> Tensor:
@@ -110,7 +113,7 @@ class C_eAR_GenRNN(nn.Module):
             # [Batch] => [Batch, size_i_embed_ar]
             i_embed_ar_t = self.embedding(sample_t_minus_1)
             h_rnn_t = cell(torch.cat((i_embed_ar_t, i_cond_t), dim=1), h_rnn_t_minus_1)
-            o_t = self.fc2(F.relu(self.fc1(h_rnn_t)))
+            o_t = self.fc(h_rnn_t)
             posterior_t = F.softmax(o_t, dim=1)
             dist_t = torch.distributions.Categorical(posterior_t)
             # Random sampling from categorical distribution

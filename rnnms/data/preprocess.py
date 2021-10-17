@@ -36,7 +36,7 @@ def melspectrogram(wave: np.ndarray, conf: ConfMelspectrogram) -> np.ndarray:
     """wave2mel preprocessing.
 
     wave => preemphasised wave => mel => logmel => normalization
-    mel - lower-cut (50Hz) log-mel amplitude spectrogram
+    mel: lower-cut log-mel amplitude spectrogram
     n_fft (2048) >> win_length (800), so information is came from only center of bin (1/4 overlap).
 
     Args:
@@ -86,9 +86,7 @@ def mu_compress(wave: np.ndarray, bits_mu_law: int) -> np.ndarray:
 
     Args:
         wave: Target waveform
-        bits_mu_law: μ-law compressed waveform's bit depth
-        stft_hop_length: STFT stride
-        stft_win_length: STFT window length
+        bits_mu_law: Bit depth of μ-law compressed waveform
     Returns:
         μ-law encoded waveform, each sample point is int and in range [0, 2^bit - 1]
     """

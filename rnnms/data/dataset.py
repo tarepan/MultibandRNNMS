@@ -47,9 +47,6 @@ class LJSpeech_mel_mulaw(Dataset):
         """
 
         # Design Notes:
-        #   Download:
-        #     Dataset is often saved in the private adress, so there is no `download_dataset` safety flag.
-        #     `download` is common option in torchAudio datasets.
         #   Dataset archive name:
         #     Dataset contents differ based on argument, so archive should differ when arguments differ.
         #     It is guaranteed by name by argument hash.
@@ -60,23 +57,34 @@ class LJSpeech_mel_mulaw(Dataset):
 
         self._corpus = LJSpeech(conf.corpus)
         arg_hash = hash_args(subtypes, conf.preprocess.target_sr)
+        archive_name = f"{arg_hash}.zip"
 
-        # dataset_dir_adress: URL/localPath of JSSS_spec dataset directory.
-        LJS_mel_mulaw_root = Path(".")/"tmp"/"LJSpeech_mel_mulaw"
-        self._path_contents_local = LJS_mel_mulaw_root/"contents"/arg_hash
-        adress_dataset_dir = f"{conf.adress_data_root}/datasets/LJSpeech" if conf.adress_data_root else str(LJS_mel_mulaw_root/"archive")
-        adress_dataset_archive = f"{adress_dataset_dir}/{arg_hash}.zip"
+
+        archive_root = conf.adress_data_root
+        # Directory to which contents are extracted, and archive is placed if adress is not provided.
+        local_root = Path(".")/"tmp"/"LJSpeech_mel_mulaw"
+        
+        # Archive: placed in given adress (conf) or default adress (local dataset directory)
+        adress_dataset_dir = f"{archive_root}/datasets/LJSpeech" if archive_root else None
+        str(local_root/"archive")
+        adress_archive_given = f"{dataset_root}/datasets/LJSpeech/{archive_name}" if dataset_root else None
+        adress_archive_default = str(local_root/"archive")
+        adress_archive = adress_archive_given if adress_archive_given else adress_archive_default
+
+        # Contents: contents are extracted in local dataset directory
+        self._path_contents = local_root/"contents"/arg_hash
+
 
         # Prepare data identities.
         self._ids: List[ItemIdLJSpeech] = list(filter(lambda id: id.subtype in subtypes, self._corpus.get_identities()))
 
         # Deploy dataset contents.
-        contents_acquired = try_to_acquire_archive_contents(adress_dataset_archive, self._path_contents_local)
+        contents_acquired = try_to_acquire_archive_contents(adress_archive, self._path_contents)
         if not contents_acquired:
             # Generate the dataset contents from corpus
             print("Dataset archive file is not found. Automatically generating new dataset...")
             self._generate_dataset_contents()
-            save_archive(self._path_contents_local, adress_dataset_archive)
+            save_archive(self._path_contents, adress_archive)
             print("Dataset contents was generated and archive was saved.")
 
     def _generate_dataset_contents(self) -> None:
@@ -87,17 +95,17 @@ class LJSpeech_mel_mulaw(Dataset):
         print("Preprocessing...")
         for id in self._ids:
             path_i_wav = self._corpus.get_item_path(id)
-            path_o_mulaw = get_dataset_mulaw_path(self._path_contents_local, id)
-            path_o_mel = get_dataset_mel_path(self._path_contents_local, id)
+            path_o_mulaw = get_dataset_mulaw_path(self._path_contents, id)
+            path_o_mel = get_dataset_mel_path(self._path_contents, id)
             preprocess_mel_mulaw(path_i_wav, path_o_mel, path_o_mulaw, self.conf.preprocess)
         print("Preprocessed.")
 
     def _load_datum(self, id: ItemIdLJSpeech) -> Tuple[Tensor, Tensor]:
 
         # Tensor(T_mel, freq)
-        mel: Tensor = load(get_dataset_mel_path(self._path_contents_local, id))
+        mel: Tensor = load(get_dataset_mel_path(self._path_contents, id))
         # Tensor(T_mel * hop_length,)
-        mulaw: Tensor = load(get_dataset_mulaw_path(self._path_contents_local, id))
+        mulaw: Tensor = load(get_dataset_mulaw_path(self._path_contents, id))
 
         if self._train:
             # Time-directional random clipping

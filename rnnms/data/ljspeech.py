@@ -24,19 +24,22 @@ class ConfCorpus:
     """Configuration of corpus.
 
     Args:
-        mirror_root: Root adress from/to which corpus mirror will be loaded/saved. If None, use default.
-        download: Whether download original corpus or not when dataset and mirror archive are not found.
+        mirror_root: Root adress of corpus mirror, to which original archive is forwarded. If None, use default.
+        download: Whether download original corpus or not when requested (e.g. origin->mirror forwarding).
     """
-    mirror_root: Optional[str] = None # MISSING
-    download: bool = False # MISSING
+    mirror_root: Optional[str] = MISSING
+    download: bool = MISSING
 
 class LJSpeech(AbstractCorpus[ItemIdLJSpeech]):
     """LJSpeech corpus.
-    
+
     Archive/contents handler of LJSpeech corpus.
-    Corpus consists of 'archive' and 'contents'.
+
+    Terminology:
+        mirror: Mirror archive of the corpus
+        contents: Contents extracted from archive
     """
-    
+
     def __init__(self, conf: ConfCorpus) -> None:
         """Initiate LJSpeech with archive options.
         """
@@ -46,26 +49,30 @@ class LJSpeech(AbstractCorpus[ItemIdLJSpeech]):
         ver: str = "1.1"
         # Equal to 1st layer directory name of original zip.
         self._corpus_name: str = f"LJSpeech-{ver}"
+        archive_name = f"{self._corpus_name}.tar.bz2"
 
-        self._origin_adress = f"https://data.keithito.com/data/speech/{self._corpus_name}.tar.bz2"
-        dir_corpus_local: str = "./data/corpuses/LJSpeech/"
+        self._origin_adress = f"https://data.keithito.com/data/speech/{archive_name}"
 
-        # Archive
-        adress_archive_mirror = f"{conf.mirror_root}/corpuses/{self._corpus_name}.tar.bz2" if conf.mirror_root else None
-        default_archive_mirror = str((Path(dir_corpus_local) / "archive" / f"{self._corpus_name}.tar.bz2").resolve())
-        self._adress_mirror = adress_archive_mirror if adress_archive_mirror else default_archive_mirror
+        mirror_root = conf.mirror_root
+        # Directory to which contents are extracted, and mirror is placed if adress is not provided.
+        local_root = Path("./data")
 
-        # Contents
-        self._path_contents_local = Path(dir_corpus_local) / "contents"
+        # Mirror: placed in given adress (conf) or default adress (local corpus directory)
+        adress_mirror_given = f"{mirror_root}/corpuses/{archive_name}" if mirror_root else None
+        adress_mirror_default = str((local_root / "corpuses" / "LJSpeech" / "archive" / archive_name).resolve())
+        self._adress_mirror = adress_mirror_given if adress_mirror_given else adress_mirror_default
+
+        # Contents: contents are extracted in local corpus directory
+        self._path_contents = local_root / "corpuses" / "LJSpeech" / "contents"
 
     def get_contents(self) -> None:
         """Get corpus contents into local.
         """
 
-        get_contents(self._adress_mirror, self._path_contents_local, self.conf.download, self.forward_from_origin)
+        get_contents(self._adress_mirror, self._path_contents, self.conf.download, self.forward_from_origin)
 
     def forward_from_origin(self) -> None:
-        """Forward original corpus archive to the adress.
+        """Forward original corpus archive to the mirror adress.
         """
 
         forward_from_general(self._origin_adress, self._adress_mirror)
@@ -109,11 +116,10 @@ class LJSpeech(AbstractCorpus[ItemIdLJSpeech]):
             Path of the specified item.
         """
 
-        root = str(self._path_contents_local)
+        root = self._path_contents
         subtype = str(id.subtype).zfill(3)
         num = str(id.serial_num).zfill(4)
-        p = f"{root}/{self._corpus_name}/wavs/LJ{subtype}-{num}.wav"
-        return Path(p)
+        return root / self._corpus_name / "wavs" / f"LJ{subtype}-{num}.wav"
 
 
 import fsspec

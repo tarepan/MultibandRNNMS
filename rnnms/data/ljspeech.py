@@ -1,9 +1,11 @@
 from typing import List, NamedTuple, Optional
 from pathlib import Path
+from dataclasses import dataclass
 
 from corpuspy.interface import AbstractCorpus
 from corpuspy.helper.contents import get_contents
-
+from omegaconf import MISSING
+import fsspec
 
 # Mode = Literal[Longform, Shortform, "simplification", "summarization"] # >=Python3.8
 Subtype = int
@@ -13,47 +15,68 @@ subtypes = list(range(1,51))
 class ItemIdLJSpeech(NamedTuple):
     """Identity of JSUT corpus's item.
     """
-    
+
     subtype: Subtype
     serial_num: int
 
 
+@dataclass
+class ConfCorpus:
+    """Configuration of corpus.
+
+    Args:
+        mirror_root: Root adress of corpus mirror, to which original archive is forwarded. If None, use default.
+        download: Whether download original corpus or not when requested (e.g. origin->mirror forwarding).
+    """
+    mirror_root: Optional[str] = MISSING
+    download: bool = MISSING
+
 class LJSpeech(AbstractCorpus[ItemIdLJSpeech]):
     """LJSpeech corpus.
-    
+
     Archive/contents handler of LJSpeech corpus.
+
+    Terminology:
+        mirror: Mirror archive of the corpus
+        contents: Contents extracted from archive
     """
-    
-    def __init__(self, adress: Optional[str] = None, download_origin: bool = False) -> None:
+
+    def __init__(self, conf: ConfCorpus) -> None:
         """Initiate LJSpeech with archive options.
-        Args:
-            adress: Corpus archive adress (e.g. path, S3) from/to which archive will be read/written through `fsspec`.
-            download_origin: Download original corpus when there is no corpus in local and specified adress.
         """
+
+        self.conf = conf
 
         ver: str = "1.1"
         # Equal to 1st layer directory name of original zip.
         self._corpus_name: str = f"LJSpeech-{ver}"
-        self._origin_adress = f"https://data.keithito.com/data/speech/{self._corpus_name}.tar.bz2"
+        archive_name = f"{self._corpus_name}.tar.bz2"
 
-        dir_corpus_local: str = "./data/corpuses/LJSpeech/"
-        default_path_archive = str((Path(dir_corpus_local) / "archive" / f"{self._corpus_name}.tar.bz2").resolve())
-        self._path_contents_local = Path(dir_corpus_local) / "contents"
-        self._adress = adress if adress else default_path_archive
+        self._origin_adress = f"https://data.keithito.com/data/speech/{archive_name}"
 
-        self._download_origin = download_origin
+        mirror_root = conf.mirror_root
+        # Directory to which contents are extracted, and mirror is placed if adress is not provided.
+        local_root = Path("./data")
+
+        # Mirror: placed in given adress (conf) or default adress (local corpus directory)
+        adress_mirror_given = f"{mirror_root}/corpuses/{archive_name}" if mirror_root else None
+        adress_mirror_default = str((local_root / "corpuses" / "LJSpeech" / "archive" / archive_name).resolve())
+        self._adress_mirror = adress_mirror_given or adress_mirror_default
+
+        # Contents: contents are extracted in local corpus directory
+        self._path_contents = local_root / "corpuses" / "LJSpeech" / "contents"
 
     def get_contents(self) -> None:
         """Get corpus contents into local.
         """
 
-        get_contents(self._adress, self._path_contents_local, self._download_origin, self.forward_from_origin)
+        get_contents(self._adress_mirror, self._path_contents, self.conf.download, self.forward_from_origin)
 
     def forward_from_origin(self) -> None:
-        """Forward original corpus archive to the adress.
+        """Forward original corpus archive to the mirror adress.
         """
 
-        forward_from_general(self._origin_adress, self._adress)
+        forward_from_general(self._origin_adress, self._adress_mirror)
 
     def get_identities(self) -> List[ItemIdLJSpeech]:
         """Get corpus item identities.
@@ -94,14 +117,10 @@ class LJSpeech(AbstractCorpus[ItemIdLJSpeech]):
             Path of the specified item.
         """
 
-        root = str(self._path_contents_local)
+        root = self._path_contents
         subtype = str(id.subtype).zfill(3)
         num = str(id.serial_num).zfill(4)
-        p = f"{root}/{self._corpus_name}/wavs/LJ{subtype}-{num}.wav"
-        return Path(p)
-
-
-import fsspec
+        return root / self._corpus_name / "wavs" / f"LJ{subtype}-{num}.wav"
 
 
 def forward_from_general(adress_from: str, forward_to: str) -> None:
@@ -112,7 +131,7 @@ def forward_from_general(adress_from: str, forward_to: str) -> None:
         forward_to: Forward distination adress.
     """
 
-    adress_from_with_cache = f"simplecache::{adress_from}" 
+    adress_from_with_cache = f"simplecache::{adress_from}"
     forward_to_with_cache = f"simplecache::{forward_to}"
 
     with fsspec.open(adress_from_with_cache, "rb") as origin:

@@ -1,85 +1,92 @@
 from pathlib import Path
 import random
 from typing import List, Optional, Tuple
+from dataclasses import dataclass
 
 from torch import Tensor, load
 from torch.utils.data import Dataset
 from corpuspy.components.archive import hash_args, try_to_acquire_archive_contents, save_archive
+from omegaconf import MISSING
 
-from .ljspeech import ItemIdLJSpeech, LJSpeech, Subtype
-from .preprocess import preprocess_mel_mulaw
-
-
-def get_dataset_mulaw_path(dir_dataset: Path, id: ItemIdLJSpeech) -> Path:
-    return dir_dataset / f"{id.subtype}" / "mulaws" / f"{id.serial_num}.mulaw.pt"
+from .ljspeech import ConfCorpus, ItemIdLJSpeech, LJSpeech, Subtype
+from .preprocess import ConfPreprocessing, preprocess_mel_mulaw
 
 
-def get_dataset_mel_path(dir_dataset: Path, id: ItemIdLJSpeech) -> Path:
-    return dir_dataset / f"{id.subtype}" / "mels" / f"{id.serial_num}.mel.pt"
+def get_dataset_mulaw_path(dir_dataset: Path, item_id: ItemIdLJSpeech) -> Path:
+    """Get waveform item path in dataset.
+    """
+    return dir_dataset / f"{item_id.subtype}" / "mulaws" / f"{item_id.serial_num}.mulaw.pt"
 
 
-class LJSpeech_mel_mulaw(Dataset):
+def get_dataset_mel_path(dir_dataset: Path, item_id: ItemIdLJSpeech) -> Path:
+    """Get mel-spec item path in dataset.
+    """
+    return dir_dataset / f"{item_id.subtype}" / "mels" / f"{item_id.serial_num}.mel.pt"
+
+
+@dataclass
+class ConfDataset:
+    """Configuration of dataset.
+
+    Args:
+        adress_data_root: Root adress of data
+        clip_length_mel: Clipping length with mel frame unit.
+        mel_stft_stride: hop length of mel-spectrogram STFT.
+    """
+    adress_data_root: Optional[str] = MISSING
+    clip_length_mel: int = MISSING
+    mel_stft_stride: int = MISSING
+    corpus: ConfCorpus = ConfCorpus(mirror_root="${..adress_data_root}")
+    preprocess: ConfPreprocessing = ConfPreprocessing(stft_hop_length="${..mel_stft_stride}")
+
+class LJSpeechMelMulaw(Dataset):
     """Audio mel-spec/mu-law-wave dataset from LJSpeech speech corpus.
     """
-    def __init__(
-        self,
-        train: bool,
-        subtypes: List[Subtype] = list(range(1,51)),
-        download_corpus: bool = False,
-        corpus_adress: Optional[str] = None,
-        dataset_dir_adress: Optional[str] = None,
-    ):
+    def __init__(self, train: bool, conf: ConfDataset, subtypes: List[Subtype] = list(range(1,51))):
         """
         Args:
             train: train_dataset if True else validation/test_dataset.
+            conf: Configuration of this dataset.
             subtypes: Sub corpus types.
-            download_corpus: Whether download the corpus or not when dataset is not found.
-            corpus_adress: URL/localPath of corpus archive (remote url, like `s3::`, can be used). None use default URL.
-            dataset_dir_adress: URL/localPath of JSSS_spec dataset directory (remote url, like `s3::`, can be used).
         """
 
         # Design Notes:
-        #   Sampling rate:
-        #     Sampling rates of dataset A and B should match, so `sampling_rate` is not a optional, but required argument.
-        #   Download:
-        #     Dataset is often saved in the private adress, so there is no `download_dataset` safety flag.
-        #     `download` is common option in torchAudio datasets.
         #   Dataset archive name:
-        #     Dataset contents differ based on argument, so archive should differ when arguments differ.
+        #     Dataset contents differ based on argument,
+        #     so archive should differ when arguments differ.
         #     It is guaranteed by name by argument hash.
 
-        # Hardcoded Hyperparams
-
-        # resample_sr: If not None, resample with specified sampling rate.
-        # clip_length_mel: Clipping length with mel frame unit.
-        # mel_stft_stride: hop length of mel-spectrogram STFT.
-        resample_sr: Optional[int] = 16000
-        clip_length_mel: int = 24
-        mel_stft_stride: int = 200
-
         # Store parameters.
+        self.conf = conf
         self._train = train
-        self._resample_sr = resample_sr
-        self._clip_length_mel = clip_length_mel
-        self._mel_stft_hop_length = mel_stft_stride
 
-        self._corpus = LJSpeech(corpus_adress, download_corpus)
-        arg_hash = hash_args(subtypes, resample_sr)
-        LJS_mel_mulaw_root = Path(".")/"tmp"/"LJSpeech_mel_mulaw"
-        self._path_contents_local = LJS_mel_mulaw_root/"contents"/arg_hash
-        dataset_dir_adress = dataset_dir_adress if dataset_dir_adress else str(LJS_mel_mulaw_root/"archive")
-        dataset_archive_adress = f"{dataset_dir_adress}/{arg_hash}.zip"
+        self._corpus = LJSpeech(conf.corpus)
+        arg_hash = hash_args(subtypes, conf.preprocess.target_sr)
+        archive_name = f"{arg_hash}.zip"
+
+        archive_root = conf.adress_data_root
+        # Directory to which contents are extracted and archive is placed
+        # if adress is not provided.
+        local_root = Path(".")/"tmp"/"LJSpeech_mel_mulaw"
+        
+        # Archive: placed in given adress (conf) or default adress (local dataset directory)
+        adress_archive_given = f"{archive_root}/datasets/LJSpeech/{archive_name}" if archive_root else None
+        adress_archive_default = str(local_root/"archive"/archive_name)
+        adress_archive = adress_archive_given or adress_archive_default
+
+        # Contents: contents are extracted in local dataset directory
+        self._path_contents = local_root/"contents"/arg_hash
 
         # Prepare data identities.
         self._ids: List[ItemIdLJSpeech] = list(filter(lambda id: id.subtype in subtypes, self._corpus.get_identities()))
 
         # Deploy dataset contents.
-        contents_acquired = try_to_acquire_archive_contents(dataset_archive_adress, self._path_contents_local)
+        contents_acquired = try_to_acquire_archive_contents(adress_archive, self._path_contents)
         if not contents_acquired:
             # Generate the dataset contents from corpus
             print("Dataset archive file is not found. Automatically generating new dataset...")
             self._generate_dataset_contents()
-            save_archive(self._path_contents_local, dataset_archive_adress)
+            save_archive(self._path_contents, adress_archive)
             print("Dataset contents was generated and archive was saved.")
 
     def _generate_dataset_contents(self) -> None:
@@ -90,31 +97,31 @@ class LJSpeech_mel_mulaw(Dataset):
         print("Preprocessing...")
         for id in self._ids:
             path_i_wav = self._corpus.get_item_path(id)
-            path_o_mulaw = get_dataset_mulaw_path(self._path_contents_local, id)
-            path_o_mel = get_dataset_mel_path(self._path_contents_local, id)
-            preprocess_mel_mulaw(path_i_wav, path_o_mel, path_o_mulaw, self._resample_sr, self._mel_stft_hop_length)
+            path_o_mulaw = get_dataset_mulaw_path(self._path_contents, id)
+            path_o_mel = get_dataset_mel_path(self._path_contents, id)
+            preprocess_mel_mulaw(path_i_wav, path_o_mel, path_o_mulaw, self.conf.preprocess)
         print("Preprocessed.")
 
     def _load_datum(self, id: ItemIdLJSpeech) -> Tuple[Tensor, Tensor]:
 
         # Tensor(T_mel, freq)
-        mel: Tensor = load(get_dataset_mel_path(self._path_contents_local, id))
+        mel: Tensor = load(get_dataset_mel_path(self._path_contents, id))
         # Tensor(T_mel * hop_length,)
-        mulaw: Tensor = load(get_dataset_mulaw_path(self._path_contents_local, id))
+        mulaw: Tensor = load(get_dataset_mulaw_path(self._path_contents, id))
 
         if self._train:
             # Time-directional random clipping
-            start = random.randint(0, mel.size()[-2] - self._clip_length_mel - 1)
+            start = random.randint(0, mel.size()[-2] - self.conf.clip_length_mel - 1)
 
             # Mel-spectrogram clipping
             start_mel = start
-            end_mel = start + self._clip_length_mel
+            end_mel = start + self.conf.clip_length_mel
             # (T_mel, freq) -> (clip_length_mel, freq)
             mel_clipped = mel[start_mel : end_mel]
 
             # Waveform clipping
-            start_mulaw = self._mel_stft_hop_length * start_mel
-            end_mulaw = self._mel_stft_hop_length * end_mel + 1
+            start_mulaw = self.conf.mel_stft_stride * start_mel
+            end_mulaw = self.conf.mel_stft_stride * end_mel + 1
             # (T_mel * hop_length,) -> (clip_length_mel * hop_length,)
             mulaw_clipped = mulaw[start_mulaw : end_mulaw]
 

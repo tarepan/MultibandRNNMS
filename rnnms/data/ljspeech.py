@@ -5,6 +5,7 @@ from dataclasses import dataclass
 from corpuspy.interface import AbstractCorpus
 from corpuspy.helper.contents import get_contents
 from omegaconf import MISSING
+import fsspec
 
 # Mode = Literal[Longform, Shortform, "simplification", "summarization"] # >=Python3.8
 Subtype = int
@@ -14,7 +15,7 @@ subtypes = list(range(1,51))
 class ItemIdLJSpeech(NamedTuple):
     """Identity of JSUT corpus's item.
     """
-    
+
     subtype: Subtype
     serial_num: int
 
@@ -122,9 +123,6 @@ class LJSpeech(AbstractCorpus[ItemIdLJSpeech]):
         return root / self._corpus_name / "wavs" / f"LJ{subtype}-{num}.wav"
 
 
-import fsspec
-
-
 def forward_from_general(adress_from: str, forward_to: str) -> None:
     """Forward a file from the adress to specified adress.
     Forward any_adress -> any_adress through fsspec (e.g. local, S3, GCP).
@@ -133,7 +131,7 @@ def forward_from_general(adress_from: str, forward_to: str) -> None:
         forward_to: Forward distination adress.
     """
 
-    adress_from_with_cache = f"simplecache::{adress_from}" 
+    adress_from_with_cache = f"simplecache::{adress_from}"
     forward_to_with_cache = f"simplecache::{forward_to}"
 
     with fsspec.open(adress_from_with_cache, "rb") as origin:

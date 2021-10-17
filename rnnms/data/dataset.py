@@ -12,12 +12,16 @@ from .ljspeech import ConfCorpus, ItemIdLJSpeech, LJSpeech, Subtype
 from .preprocess import ConfPreprocessing, preprocess_mel_mulaw
 
 
-def get_dataset_mulaw_path(dir_dataset: Path, id: ItemIdLJSpeech) -> Path:
-    return dir_dataset / f"{id.subtype}" / "mulaws" / f"{id.serial_num}.mulaw.pt"
+def get_dataset_mulaw_path(dir_dataset: Path, item_id: ItemIdLJSpeech) -> Path:
+    """Get waveform item path in dataset.
+    """
+    return dir_dataset / f"{item_id.subtype}" / "mulaws" / f"{item_id.serial_num}.mulaw.pt"
 
 
-def get_dataset_mel_path(dir_dataset: Path, id: ItemIdLJSpeech) -> Path:
-    return dir_dataset / f"{id.subtype}" / "mels" / f"{id.serial_num}.mel.pt"
+def get_dataset_mel_path(dir_dataset: Path, item_id: ItemIdLJSpeech) -> Path:
+    """Get mel-spec item path in dataset.
+    """
+    return dir_dataset / f"{item_id.subtype}" / "mels" / f"{item_id.serial_num}.mel.pt"
 
 
 @dataclass
@@ -35,7 +39,7 @@ class ConfDataset:
     corpus: ConfCorpus = ConfCorpus(mirror_root="${..adress_data_root}")
     preprocess: ConfPreprocessing = ConfPreprocessing(stft_hop_length="${..mel_stft_stride}")
 
-class LJSpeech_mel_mulaw(Dataset):
+class LJSpeechMelMulaw(Dataset):
     """Audio mel-spec/mu-law-wave dataset from LJSpeech speech corpus.
     """
     def __init__(self, train: bool, conf: ConfDataset, subtypes: List[Subtype] = list(range(1,51))):
@@ -48,7 +52,8 @@ class LJSpeech_mel_mulaw(Dataset):
 
         # Design Notes:
         #   Dataset archive name:
-        #     Dataset contents differ based on argument, so archive should differ when arguments differ.
+        #     Dataset contents differ based on argument,
+        #     so archive should differ when arguments differ.
         #     It is guaranteed by name by argument hash.
 
         # Store parameters.
@@ -60,7 +65,8 @@ class LJSpeech_mel_mulaw(Dataset):
         archive_name = f"{arg_hash}.zip"
 
         archive_root = conf.adress_data_root
-        # Directory to which contents are extracted, and archive is placed if adress is not provided.
+        # Directory to which contents are extracted and archive is placed
+        # if adress is not provided.
         local_root = Path(".")/"tmp"/"LJSpeech_mel_mulaw"
         
         # Archive: placed in given adress (conf) or default adress (local dataset directory)

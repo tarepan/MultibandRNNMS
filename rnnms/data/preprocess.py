@@ -114,7 +114,11 @@ class ConfPreprocessing:
     stft_hop_length: int = MISSING
     win_length: int = MISSING
     bits_mulaw: int = MISSING
-    melspec: ConfMelspectrogram = ConfMelspectrogram(sr="${..target_sr}", hop_length="${..stft_hop_length}", win_length="{..win_length}")
+    melspec: ConfMelspectrogram = ConfMelspectrogram(
+        sr="${..target_sr}",
+        hop_length="${..stft_hop_length}",
+        win_length="{..win_length}"
+    )
 
 def preprocess_mel_mulaw(
     path_i_wav: Path,

@@ -6,7 +6,7 @@ from torch.utils.data import random_split, DataLoader
 from pytorch_lightning import LightningDataModule
 from omegaconf import MISSING
 
-from .dataset import ConfDataset, LJSpeech_mel_mulaw
+from .dataset import ConfDataset, LJSpeechMelMulaw
 
 
 @dataclass
@@ -29,7 +29,7 @@ class DataLoaderPerformance:
     num_workers: int
     pin_memory: bool
 
-    def __init__(self, num_workers: Optional[int] = None, pin_memory: Optional[bool] = None) -> None:
+    def __init__(self, num_workers: Optional[int], pin_memory: Optional[bool]) -> None:
         """Default: num_workers == cpu_count & pin_memory == True
         """
 
@@ -52,27 +52,29 @@ class ConfData:
     dataset: ConfDataset = ConfDataset()
 
 class LJSpeechDataModule(LightningDataModule):
+    """PL-DataModule of LJSpeech wave & mel.
+    """
     def __init__(self, conf: ConfData):
         # Design Notes: Dataset independent
         #   DataModule's responsibility is about data loader.
         #   Dataset handle corpus, preprocessing and datum sampling.
-        
+
         super().__init__()
         self.conf = conf
         self.loader_perf = DataLoaderPerformance(conf.loader.num_workers, conf.loader.pin_memory)
 
-    def prepare_data(self, *args, **kwargs) -> None:
+    def prepare_data(self) -> None:
         """Prepare data in dataset.
         """
 
-        LJSpeech_mel_mulaw(train=True, conf=self.conf.dataset)
+        LJSpeechMelMulaw(train=True, conf=self.conf.dataset)
 
     def setup(self, stage: Optional[str] = None):
         """Setup train/val/test datasets and batch sizes.
         """
 
         if stage == "fit" or stage is None:
-            dataset_full = LJSpeech_mel_mulaw(train=True, conf=self.conf.dataset)
+            dataset_full = LJSpeechMelMulaw(train=True, conf=self.conf.dataset)
 
             # three (variable-length) sample audio without batching
             n_full = len(dataset_full)
@@ -83,7 +85,7 @@ class LJSpeechDataModule(LightningDataModule):
             # [todo]: Val is now train=True, so sample in TB is very short speech.
 
         if stage == "test" or stage is None:
-            self.dataset_test = LJSpeech_mel_mulaw(train=False, conf=self.conf.dataset)
+            self.dataset_test = LJSpeechMelMulaw(train=False, conf=self.conf.dataset)
             self.batch_size_test = self.conf.loader.batch_size
 
     def train_dataloader(self):

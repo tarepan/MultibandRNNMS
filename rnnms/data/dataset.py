@@ -59,21 +59,17 @@ class LJSpeech_mel_mulaw(Dataset):
         arg_hash = hash_args(subtypes, conf.preprocess.target_sr)
         archive_name = f"{arg_hash}.zip"
 
-
         archive_root = conf.adress_data_root
         # Directory to which contents are extracted, and archive is placed if adress is not provided.
         local_root = Path(".")/"tmp"/"LJSpeech_mel_mulaw"
         
         # Archive: placed in given adress (conf) or default adress (local dataset directory)
-        adress_dataset_dir = f"{archive_root}/datasets/LJSpeech" if archive_root else None
-        str(local_root/"archive")
-        adress_archive_given = f"{dataset_root}/datasets/LJSpeech/{archive_name}" if dataset_root else None
-        adress_archive_default = str(local_root/"archive")
+        adress_archive_given = f"{archive_root}/datasets/LJSpeech/{archive_name}" if archive_root else None
+        adress_archive_default = str(local_root/"archive"/archive_name)
         adress_archive = adress_archive_given if adress_archive_given else adress_archive_default
 
         # Contents: contents are extracted in local dataset directory
         self._path_contents = local_root/"contents"/arg_hash
-
 
         # Prepare data identities.
         self._ids: List[ItemIdLJSpeech] = list(filter(lambda id: id.subtype in subtypes, self._corpus.get_identities()))

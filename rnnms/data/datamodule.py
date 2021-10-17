@@ -80,6 +80,7 @@ class LJSpeechDataModule(LightningDataModule):
                 dataset_full, [n_full - 3, 3]
             )
             self.batch_size_val = 1
+            # [todo]: Val is now train=True, so sample in TB is very short speech.
 
         if stage == "test" or stage is None:
             self.dataset_test = LJSpeech_mel_mulaw(train=False, conf=self.conf.dataset)

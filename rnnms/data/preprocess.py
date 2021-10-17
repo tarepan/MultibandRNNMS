@@ -117,7 +117,7 @@ class ConfPreprocessing:
     melspec: ConfMelspectrogram = ConfMelspectrogram(
         sr="${..target_sr}",
         hop_length="${..stft_hop_length}",
-        win_length="{..win_length}"
+        win_length="${..win_length}",
     )
 
 def preprocess_mel_mulaw(

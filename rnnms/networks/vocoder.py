@@ -6,6 +6,7 @@ import torch.nn.functional as F
 from torchaudio.transforms import MuLawDecoding
 from omegaconf import MISSING
 
+from .prenet import RecurrentPreNet, ConfRecurrentPreNet
 from .decoder import C_eAR_GenRNN, ConfC_eAR_GenRNN
 
 
@@ -22,7 +23,12 @@ class ConfRNN_MS_Vocoder:
     size_latent: int = MISSING
     bits_mu_law: int = MISSING
     hop_length: int = MISSING
-    wave_ar: ConfC_eAR_GenRNN = ConfC_eAR_GenRNN(size_i_cnd="${..size_latent}", size_o_bit="${..bits_mu_law}")
+    prenet: ConfRecurrentPreNet = ConfRecurrentPreNet(
+        dim_i="${..size_mel_freq}",
+        dim_o="${..size_latent}")
+    wave_ar: ConfC_eAR_GenRNN = ConfC_eAR_GenRNN(
+        size_i_cnd="${..size_latent}",
+        size_o_bit="${..bits_mu_law}")
 
 class RNN_MS_Vocoder(nn.Module):
     """RNN_MS: Universal Vocoder
@@ -32,7 +38,7 @@ class RNN_MS_Vocoder(nn.Module):
         self.hop_length = conf.hop_length
 
         # PreNet which transform conditioning inputs into latent representation
-        self.prenet = nn.GRU(conf.size_mel_freq, conf.size_latent, num_layers=2, batch_first=True, bidirectional=True)
+        self.prenet = RecurrentPreNet(conf.prenet)
         # AR which yeild sample probability autoregressively
         self.ar = C_eAR_GenRNN(conf.wave_ar)
         self.mulaw_dec = MuLawDecoding(2**conf.bits_mu_law)
@@ -48,11 +54,11 @@ class RNN_MS_Vocoder(nn.Module):
             Tensor(Batch, Time, before_softmax) Generated mu-law encoded waveform
         """
         # Latent representation
-        # Tensor(batch, T_mel, 2*size_latent)
+        # Tensor(batch, T_mel, size_latent)
         latents, _ = self.prenet(mels)
 
         # Cond. Upsampling
-        # Tensor(batch, T_mel*hop_length, 2*size_latent)
+        # Tensor(batch, T_mel*hop_length, size_latent)
         latents_upsampled: Tensor = F.interpolate(latents.transpose(1, 2), scale_factor=self.hop_length).transpose(1, 2)
 
         # Autoregressive

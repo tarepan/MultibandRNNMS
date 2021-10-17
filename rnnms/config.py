@@ -54,9 +54,14 @@ train:
         sampling_rate: "${target_sr}"
         vocoder:
             size_mel_freq: "${dim_mel}"
-            size_latent: 128
+            size_latent: 256
             bits_mu_law: "${bits_mulaw}"
             hop_length: "${stride_stft}"
+            prenet:
+                # dim_i: local sync
+                # dim_o: local sync
+                num_layers: 2
+                bidirectional: True
             wave_ar:
                 # size_i_cnd: local sync
                 size_i_embed_ar: 256

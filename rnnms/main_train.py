@@ -18,11 +18,7 @@ def main_train():
     torchaudio.set_audio_backend("sox_io")
 
     # Dataset
-    datamodule = LJSpeechDataModule(
-        conf.data.batch_size,
-        performance=DataLoaderPerformance(conf.data.num_workers, conf.data.pin_memory),
-        adress_data_root=conf.data.adress_data_root
-    )
+    datamodule = LJSpeechDataModule(conf.data)
 
     # Train
     train(conf.train, datamodule)

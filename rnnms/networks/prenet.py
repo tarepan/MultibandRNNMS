@@ -28,7 +28,7 @@ class RecurrentPreNet(nn.Module):
         super().__init__()
 
         # Hidden size adjustment: If bidirectional, output dimension become twice
-        dim_h = conf.dim_o // 2 if conf.bidirection else conf.dim_o
+        dim_h = conf.dim_o // 2 if conf.bidirectional else conf.dim_o
 
         self.net = nn.GRU(
             conf.dim_i,

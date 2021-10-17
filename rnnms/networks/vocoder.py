@@ -55,7 +55,7 @@ class RNN_MS_Vocoder(nn.Module):
         """
         # Latent representation
         # Tensor(batch, T_mel, size_latent)
-        latents, _ = self.prenet(mels)
+        latents = self.prenet(mels)
 
         # Cond. Upsampling
         # Tensor(batch, T_mel*hop_length, size_latent)
@@ -78,7 +78,7 @@ class RNN_MS_Vocoder(nn.Module):
         """
 
         # Transform conditionings into upsampled latents
-        latents, _ = self.prenet(mel)
+        latents = self.prenet(mel)
         latents_upsampled: Tensor = F.interpolate(latents.transpose(1, 2), scale_factor=self.hop_length).transpose(1, 2)
 
         # Sample a waveform (sequence of μ-law encoded samples)

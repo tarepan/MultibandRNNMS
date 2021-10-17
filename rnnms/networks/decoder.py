@@ -53,7 +53,7 @@ class C_eAR_GenRNN(nn.Module):
 
         # RNN module
         self.size_h_rnn = conf.size_h_rnn
-        self.rnn = nn.GRU(conf.size_i_embed_ar + 2 * conf.size_i_cnd, conf.size_h_rnn, batch_first=True)
+        self.rnn = nn.GRU(conf.size_i_embed_ar + conf.size_i_cnd, conf.size_h_rnn, batch_first=True)
 
         # RNN_out -> μ-law bits energy
         self.fc1 = nn.Linear(conf.size_h_rnn, conf.size_h_fc)

@@ -2,6 +2,7 @@ from typing import Optional
 from os import cpu_count
 from dataclasses import dataclass
 
+import torch
 from torch.utils.data import random_split, DataLoader
 from pytorch_lightning import LightningDataModule
 from omegaconf import MISSING
@@ -74,15 +75,19 @@ class LJSpeechDataModule(LightningDataModule):
         """
 
         if stage == "fit" or stage is None:
-            dataset_full = LJSpeechMelMulaw(train=True, conf=self.conf.dataset)
+            dataset_full_train = LJSpeechMelMulaw(train=True, conf=self.conf.dataset)
+            dataset_full_not_train = LJSpeechMelMulaw(train=False, conf=self.conf.dataset)
 
-            # three (variable-length) sample audio without batching
-            n_full = len(dataset_full)
-            self.dataset_train, self.dataset_val = random_split(
-                dataset_full, [n_full - 3, 3]
+            n_full = len(dataset_full_train)
+            # N-3 utterances, fixed-length.
+            self.dataset_train, _ = random_split(
+                dataset_full_train, [n_full - 3, 3], generator=torch.Generator().manual_seed(42)
+            )
+            # 3 utterances, variable-length. Generator enable consistent split.
+            _, self.dataset_val = random_split(
+                dataset_full_not_train, [n_full - 3, 3], generator=torch.Generator().manual_seed(42)
             )
             self.batch_size_val = 1
-            # [todo]: Val is now train=True, so sample in TB is very short speech.
 
         if stage == "test" or stage is None:
             self.dataset_test = LJSpeechMelMulaw(train=False, conf=self.conf.dataset)

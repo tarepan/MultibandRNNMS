@@ -31,7 +31,7 @@ ToDO: Link super great impressive high-quatity audio demo.
 ### Install <!-- omit in toc -->
 
 ```bash
-!pip install git+https://github.com/tarepan/UniversalVocoding#main -q
+!pip install git+https://github.com/tarepan/UniversalVocoding
 ```
 
 ### Training <!-- omit in toc -->
@@ -39,7 +39,7 @@ ToDO: Link super great impressive high-quatity audio demo.
 !python -m rnnms.main_train
 ```
 
-For arguments, check [./rnnms/args.py](https://github.com/tarepan/UniversalVocoding/blob/main/rnnms/args.py)  
+For arguments, check [./rnnms/config.py](https://github.com/tarepan/UniversalVocoding/blob/main/rnnms/config.py)  
 
 ### preprocessing <!-- omit in toc -->
 "Batteries Included" 😉  
@@ -58,7 +58,7 @@ Copy [`rnnms.main_train`] and replace DataModule.
 
 ## System Details
 ### Model <!-- omit in toc -->
-- PreNet: 2-layer bidi-GRU (so that no time-directional compression)
+- PreNet: 2-layer bidi-GRU
 - Upsampler: x200 time-directional latent upsampling with interpolation
 - Decoder: Latent-conditional, embedded-auto-regressive generative RNN with 10-bit μ-law encoding
 
@@ -110,8 +110,6 @@ Eprint = {arXiv:1811.06292},
 ```
 
 ## Acknowlegements <!-- omit in toc -->
-- [fatchord/WaveRNN](https://github.com/fatchord/WaveRNN)
-  - Alternative WaveRNN
 - [bshall/UniversalVocoding]
   - Model and hyperparams are totally based on this repository.
 

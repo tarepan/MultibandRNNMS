@@ -25,7 +25,7 @@ Almost all code are rewriten.
 <!-- [Audio sample page](https://tarepan.github.io/UniversalVocoding).   -->
 ToDO: Link super great impressive high-quatity audio demo.  
 
-## Quick training
+## Quick Training
 Jump to ☞ [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)][notebook], then Run. That's all!  
 
 ## How to Use

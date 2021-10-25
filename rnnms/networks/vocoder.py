@@ -11,31 +11,31 @@ from .decoder import C_eAR_GenRNN, ConfC_eAR_GenRNN
 
 
 @dataclass
-class ConfRNN_MS_Vocoder:
-    """Configuration of RNN_MS_Vocoder.
+class ConfRNNMSVocoder:
+    """Configuration of RNNMSVocoder.
     Args:
-    size_mel_freq: Dimension of mel frequency
-    size_latent: Dimension of latent vector
-    bits_mu_law: Bit depth of μ-law encoding
-    hop_length: STFT stride
+        dim_i_feature: Dimension of input feature (e.g. Frequency dim of mel-spec)
+        dim_voc_latent: Dimension of vocoder's latent between PreNet and WaveRNN
+        bits_mu_law: Bit depth of μ-law encoding
+        upsampling_t: Factor of time-direcitonal latent upsampling (e.g. STFT stride)
     """
-    size_mel_freq: int = MISSING
-    size_latent: int = MISSING
+    dim_i_feature: int = MISSING
+    dim_voc_latent: int = MISSING
     bits_mu_law: int = MISSING
-    hop_length: int = MISSING
+    upsampling_t: int = MISSING
     prenet: ConfRecurrentPreNet = ConfRecurrentPreNet(
-        dim_i="${..size_mel_freq}",
-        dim_o="${..size_latent}")
+        dim_i="${..dim_i_feature}",
+        dim_o="${..dim_voc_latent}")
     wave_ar: ConfC_eAR_GenRNN = ConfC_eAR_GenRNN(
-        size_i_cnd="${..size_latent}",
+        size_i_cnd="${..dim_voc_latent}",
         size_o_bit="${..bits_mu_law}")
 
-class RNN_MS_Vocoder(nn.Module):
-    """RNN_MS: Universal Vocoder
+class RNNMSVocoder(nn.Module):
+    """RNN_MS Universal Vocoder, generating speech from conditioning.
     """
-    def __init__(self, conf: ConfRNN_MS_Vocoder):
+    def __init__(self, conf: ConfRNNMSVocoder):
         super().__init__()
-        self.hop_length = conf.hop_length
+        self.time_upsampling_factor = conf.upsampling_t
 
         # PreNet which transform conditioning inputs into latent representation
         self.prenet = RecurrentPreNet(conf.prenet)
@@ -59,7 +59,7 @@ class RNN_MS_Vocoder(nn.Module):
 
         # Cond. Upsampling
         # Tensor(batch, T_mel*hop_length, size_latent)
-        latents_upsampled: Tensor = F.interpolate(latents.transpose(1, 2), scale_factor=self.hop_length).transpose(1, 2)
+        latents_upsampled: Tensor = F.interpolate(latents.transpose(1, 2), scale_factor=self.time_upsampling_factor).transpose(1, 2)
 
         # Autoregressive
         bits_energy_series = self.ar(wave_mu_law, latents_upsampled)
@@ -79,7 +79,7 @@ class RNN_MS_Vocoder(nn.Module):
 
         # Transform conditionings into upsampled latents
         latents = self.prenet(mel)
-        latents_upsampled: Tensor = F.interpolate(latents.transpose(1, 2), scale_factor=self.hop_length).transpose(1, 2)
+        latents_upsampled: Tensor = F.interpolate(latents.transpose(1, 2), scale_factor=self.time_upsampling_factor).transpose(1, 2)
 
         # Sample a waveform (sequence of μ-law encoded samples)
         output_mu_law = self.ar.generate(latents_upsampled)

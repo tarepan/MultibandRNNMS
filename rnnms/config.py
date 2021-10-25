@@ -53,10 +53,10 @@ train:
     model:
         sampling_rate: "${target_sr}"
         vocoder:
-            size_mel_freq: "${dim_mel}"
-            size_latent: 256
+            dim_i_feature: "${dim_mel}"
+            dim_voc_latent: 256
             bits_mu_law: "${bits_mulaw}"
-            hop_length: "${stride_stft}"
+            upsampling_t: "${stride_stft}"
             prenet:
                 # dim_i: local sync
                 # dim_o: local sync

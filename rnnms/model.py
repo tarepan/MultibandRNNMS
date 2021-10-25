@@ -8,7 +8,7 @@ from torch.optim.lr_scheduler import StepLR
 import pytorch_lightning as pl
 from omegaconf import MISSING
 
-from .networks.vocoder import RNN_MS_Vocoder, ConfRNN_MS_Vocoder
+from .networks.vocoder import RNNMSVocoder, ConfRNNMSVocoder
 
 
 @dataclass
@@ -28,7 +28,7 @@ class ConfRNN_MS:
     """Configuration of RNN_MS.
     """
     sampling_rate: int = MISSING  # Audio sampling rate
-    vocoder: ConfRNN_MS_Vocoder = ConfRNN_MS_Vocoder()
+    vocoder: ConfRNNMSVocoder = ConfRNNMSVocoder()
     optim: ConfOptim = ConfOptim()
 
 class RNN_MS(pl.LightningModule):
@@ -39,7 +39,7 @@ class RNN_MS(pl.LightningModule):
         super().__init__()
         self.save_hyperparameters()
         self.conf = conf
-        self.rnnms = RNN_MS_Vocoder(conf.vocoder)
+        self.rnnms = RNNMSVocoder(conf.vocoder)
 
     def forward(self, _: Tensor, mels: Tensor):
         return self.rnnms.generate(mels)

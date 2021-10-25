@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "rnnms"
-version = "0.2.0"
+version = "0.3.0"
 description = "Reimplementation of RNN_MS with PyTorch"
 authors = ["Tarepan"]
 readme = "README.md"

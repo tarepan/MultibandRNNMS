@@ -128,8 +128,10 @@ class MelMulawDataModule(LightningDataModule):
             pin_memory=self._loader_perf.pin_memory,
         )
 
+
 def generate_datamodule(conf: ConfData) -> MelMulawDataModule:
     if conf.data_name in presets.corpus_list:
+        print(f"Corpus: {conf.data_name}")
         corpus_cls = getattr(presets, conf.data_name)
     else:
         raise Exception(f"Corpus '{conf.data_name}' is not supported.")

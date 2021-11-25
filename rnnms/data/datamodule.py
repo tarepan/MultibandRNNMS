@@ -129,12 +129,8 @@ class MelMulawDataModule(LightningDataModule):
         )
 
 def generate_datamodule(conf: ConfData) -> MelMulawDataModule:
-    if conf.data_name == "LJ":
-        corpus_cls = presets.LJ
-    elif conf.data_name == "ZR19":
-        corpus_cls = presets.ZR19
-    elif conf.data_name == "LJ":
-        corpus_cls = presets.JVS
+    if conf.data_name in presets.corpus_list:
+        corpus_cls = getattr(presets, conf.data_name)
     else:
         raise Exception(f"Corpus '{conf.data_name}' is not supported.")
 

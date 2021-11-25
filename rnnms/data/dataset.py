@@ -16,6 +16,45 @@ from speechcorpusy.components.archive import try_to_acquire_archive_contents, sa
 from .preprocess import ConfPreprocessing, preprocess_mel_mulaw
 
 
+def dataset_adress(
+    root_adress: Optional[str],
+    corpus_name: str,
+    dataset_type: str,
+    preprocess_args,
+    ) -> Tuple[str, Path]:
+    """Path of dataset archive file and contents directory.
+
+    Args:
+        root_adress:
+        corpus_name:
+        dataset_type:
+        preprocess_args:
+    Returns: [archive file adress, contents directory path]
+    """
+    # Design Notes:
+    #   Why not `Path` object? -> Archive adress could be remote url
+    #
+    # Original Data (corpus) / Prepared Data (dataset) / Transformation (preprocss)
+    #   If use different original data, everything change.
+    #   Original item can be transformed into different type of data.
+    #   Even if data type is same, value could be changed by processing parameters.
+    #
+    # Directory structure:
+    #     datasets/{corpus_name}/{dataset_type}/
+    #         archive/{preprocess_args}.zip
+    #         contents/{preprocess_args}/{actual_data_here}
+
+    # Contents: Placed under default local directory
+    contents_root = local_root = "./tmp"
+    # Archive: Placed under given adress or default local directory
+    archive_root = root_adress or local_root
+
+    rel_dataset = f"datasets/{corpus_name}/{dataset_type}"
+    archive_file = f"{archive_root}/{rel_dataset}/archive/{preprocess_args}.zip"
+    contents_dir = f"{contents_root}/{rel_dataset}/contents/{preprocess_args}"
+    return archive_file, contents_dir
+
+
 def get_dataset_mulaw_path(dir_dataset: Path, item_id: ItemId) -> Path:
     """Get waveform item path in dataset.
     """
@@ -67,20 +106,13 @@ class MelMulaw(Dataset):
             conf.preprocess.stft_hop_length,
             conf.preprocess.target_sr,
         )
-        archive_name = f"{arg_hash}.zip"
 
-        archive_root = conf.adress_data_root
-        # Directory to which contents are extracted and archive is placed
-        # if adress is not provided.
-        local_root = Path(".")/"tmp"/"LJSpeech_mel_mulaw"
-
-        # Archive: placed in given adress (conf) or default adress (local dataset directory)
-        adress_archive_given = f"{archive_root}/datasets/LJSpeech/{archive_name}" if archive_root else None
-        adress_archive_default = str(local_root/"archive"/archive_name)
-        adress_archive = adress_archive_given or adress_archive_default
-
-        # Contents: contents are extracted in local dataset directory
-        self._path_contents = local_root/"contents"/arg_hash
+        adress_archive, self._path_contents = dataset_adress(
+            conf.adress_data_root,
+            corpus.__class__.__name__,
+            "mel_mulaw",
+            arg_hash,
+        )
 
         # Prepare data identities.
         self._ids: List[ItemId] = self._corpus.get_identities()

@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "rnnms"
-version = "0.3.0"
+version = "0.4.0"
 description = "Reimplementation of RNN_MS with PyTorch"
 authors = ["Tarepan"]
 readme = "README.md"
@@ -14,10 +14,10 @@ pytorch-lightning = "^1.4.9"
 fsspec = {version = ">=2021.5", extras = ["http", "s3"]}
 boto3 = "^1.16.18"
 numpy = ">=1.17"
-corpuspy = {git = "https://github.com/tarepan/corpuspy.git", rev = "main"}
 pyloudnorm = "^0.1.0"
 librosa = "^0.8.0"
 omegaconf = "^2.1.1"
+speechcorpusy = {git = "https://github.com/tarepan/speechcorpusy.git", rev = "main"}
 
 [tool.poetry.dev-dependencies]
 

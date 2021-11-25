@@ -15,17 +15,15 @@ bits_mulaw: 10
 dim_mel: 80
 stride_stft: 200
 data:
+    data_name: LJ
+    adress_data_root: null
     loader:
         batch_size: 32
         num_workers: null
         pin_memory: null
     dataset:
-        adress_data_root: null
         clip_length_mel: 24
         mel_stft_stride: "${stride_stft}"
-        corpus:
-            # mirror_root: local sync
-            download: False
         preprocess:
             target_sr: "${target_sr}"
             # stft_hop_length: local sync
@@ -41,6 +39,8 @@ data:
                 ref_db: 20.0
                 n_mels: "${dim_mel}"
                 fmin: 50
+    corpus:
+        download: False
 train:
     ckpt_log:
         dir_root: logs

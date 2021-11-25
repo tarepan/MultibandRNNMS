@@ -1,7 +1,10 @@
+"""Run RNNMS training"""
+
+
 import pytorch_lightning as pl
 import torchaudio
 
-from rnnms.data.datamodule import DataLoaderPerformance, LJSpeechDataModule
+from rnnms.data.datamodule import generate_datamodule
 from rnnms.train import train
 from rnnms.config import load_conf
 
@@ -18,7 +21,7 @@ def main_train():
     torchaudio.set_audio_backend("sox_io")
 
     # Dataset
-    datamodule = LJSpeechDataModule(conf.data)
+    datamodule = generate_datamodule(conf.data)
 
     # Train
     train(conf.train, datamodule)

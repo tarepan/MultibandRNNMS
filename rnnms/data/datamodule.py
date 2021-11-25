@@ -6,8 +6,10 @@ import torch
 from torch.utils.data import random_split, DataLoader
 from pytorch_lightning import LightningDataModule
 from omegaconf import MISSING
+from speechcorpusy.interface import AbstractCorpus, ConfCorpus
+from speechcorpusy import presets
 
-from .dataset import ConfDataset, LJSpeechMelMulaw
+from .dataset import ConfDataset, MelMulaw
 
 
 @dataclass
@@ -49,34 +51,42 @@ class DataLoaderPerformance:
 class ConfData:
     """Configuration of data.
     """
+    data_name: str = MISSING
+    adress_data_root: Optional[str] = MISSING
     loader: ConfLoader = ConfLoader()
-    dataset: ConfDataset = ConfDataset()
+    dataset: ConfDataset = ConfDataset(
+        adress_data_root="{..adress_data_root}"
+    )
+    corpus: ConfCorpus = ConfCorpus(
+        root="{..adress_data_root}",
+    )
 
-class LJSpeechDataModule(LightningDataModule):
-    """PL-DataModule of LJSpeech wave & mel.
+class MelMulawDataModule(LightningDataModule):
+    """PL-DataModule of mel & μ-law wave.
     """
-    def __init__(self, conf: ConfData):
+    def __init__(self, conf: ConfData, corpus: AbstractCorpus):
         # Design Notes: Dataset independent
         #   DataModule's responsibility is about data loader.
         #   Dataset handle corpus, preprocessing and datum sampling.
 
         super().__init__()
-        self.conf = conf
-        self.loader_perf = DataLoaderPerformance(conf.loader.num_workers, conf.loader.pin_memory)
+        self._conf = conf
+        self._corpus = corpus
+        self._loader_perf = DataLoaderPerformance(conf.loader.num_workers, conf.loader.pin_memory)
 
     def prepare_data(self) -> None:
         """Prepare data in dataset.
         """
 
-        LJSpeechMelMulaw(train=True, conf=self.conf.dataset)
+        MelMulaw(True, self._conf.dataset, self._corpus)
 
     def setup(self, stage: Optional[str] = None):
         """Setup train/val/test datasets and batch sizes.
         """
 
         if stage == "fit" or stage is None:
-            dataset_full_train = LJSpeechMelMulaw(train=True, conf=self.conf.dataset)
-            dataset_full_not_train = LJSpeechMelMulaw(train=False, conf=self.conf.dataset)
+            dataset_full_train = MelMulaw(True, self._conf.dataset, self._corpus)
+            dataset_full_not_train = MelMulaw(False, self._conf.dataset, self._corpus)
 
             n_full = len(dataset_full_train)
             # N-3 utterances, fixed-length.
@@ -90,30 +100,42 @@ class LJSpeechDataModule(LightningDataModule):
             self.batch_size_val = 1
 
         if stage == "test" or stage is None:
-            self.dataset_test = LJSpeechMelMulaw(train=False, conf=self.conf.dataset)
-            self.batch_size_test = self.conf.loader.batch_size
+            self.dataset_test = MelMulaw(False, self._conf.dataset, self._corpus)
+            self.batch_size_test = self._conf.loader.batch_size
 
     def train_dataloader(self):
         return DataLoader(
             self.dataset_train,
-            batch_size=self.conf.loader.batch_size,
+            batch_size=self._conf.loader.batch_size,
             shuffle=True,
-            num_workers=self.loader_perf.num_workers,
-            pin_memory=self.loader_perf.pin_memory,
+            num_workers=self._loader_perf.num_workers,
+            pin_memory=self._loader_perf.pin_memory,
         )
 
     def val_dataloader(self):
         return DataLoader(
             self.dataset_val,
             batch_size=self.batch_size_val,
-            num_workers=self.loader_perf.num_workers,
-            pin_memory=self.loader_perf.pin_memory,
+            num_workers=self._loader_perf.num_workers,
+            pin_memory=self._loader_perf.pin_memory,
         )
 
     def test_dataloader(self):
         return DataLoader(
             self.dataset_test,
             batch_size=self.batch_size_test,
-            num_workers=self.loader_perf.num_workers,
-            pin_memory=self.loader_perf.pin_memory,
+            num_workers=self._loader_perf.num_workers,
+            pin_memory=self._loader_perf.pin_memory,
         )
+
+def generate_datamodule(conf: ConfData) -> MelMulawDataModule:
+    if conf.data_name == "LJ":
+        corpus_cls = presets.LJ
+    elif conf.data_name == "ZR19":
+        corpus_cls = presets.ZR19
+    elif conf.data_name == "LJ":
+        corpus_cls = presets.JVS
+    else:
+        raise Exception(f"Corpus '{conf.data_name}' is not supported.")
+
+    return MelMulawDataModule(conf, corpus_cls(conf.corpus))

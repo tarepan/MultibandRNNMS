@@ -1,3 +1,6 @@
+"""Datasets"""
+
+
 from pathlib import Path
 import random
 from typing import List, Optional, Tuple
@@ -5,23 +8,24 @@ from dataclasses import dataclass
 
 from torch import Tensor, load
 from torch.utils.data import Dataset
-from corpuspy.components.archive import hash_args, try_to_acquire_archive_contents, save_archive
 from omegaconf import MISSING
+from speechcorpusy.interface import AbstractCorpus, ItemId
+from speechcorpusy.components.archive import hash_args
+from speechcorpusy.components.archive import try_to_acquire_archive_contents, save_archive
 
-from .ljspeech import ConfCorpus, ItemIdLJSpeech, LJSpeech, Subtype
 from .preprocess import ConfPreprocessing, preprocess_mel_mulaw
 
 
-def get_dataset_mulaw_path(dir_dataset: Path, item_id: ItemIdLJSpeech) -> Path:
+def get_dataset_mulaw_path(dir_dataset: Path, item_id: ItemId) -> Path:
     """Get waveform item path in dataset.
     """
-    return dir_dataset / f"{item_id.subtype}" / "mulaws" / f"{item_id.serial_num}.mulaw.pt"
+    return dir_dataset / f"{item_id.speaker}" / "mulaws" / f"{item_id.name}.mulaw.pt"
 
 
-def get_dataset_mel_path(dir_dataset: Path, item_id: ItemIdLJSpeech) -> Path:
+def get_dataset_mel_path(dir_dataset: Path, item_id: ItemId) -> Path:
     """Get mel-spec item path in dataset.
     """
-    return dir_dataset / f"{item_id.subtype}" / "mels" / f"{item_id.serial_num}.mel.pt"
+    return dir_dataset / f"{item_id.speaker}" / "mels" / f"{item_id.name}.mel.pt"
 
 
 @dataclass
@@ -36,39 +40,40 @@ class ConfDataset:
     adress_data_root: Optional[str] = MISSING
     clip_length_mel: int = MISSING
     mel_stft_stride: int = MISSING
-    corpus: ConfCorpus = ConfCorpus(mirror_root="${..adress_data_root}")
     preprocess: ConfPreprocessing = ConfPreprocessing(stft_hop_length="${..mel_stft_stride}")
 
-class LJSpeechMelMulaw(Dataset):
-    """Audio mel-spec/mu-law-wave dataset from LJSpeech speech corpus.
+class MelMulaw(Dataset):
+    """Audio mel-spec/mu-law-wave dataset from the corpus.
     """
-    def __init__(self, train: bool, conf: ConfDataset, subtypes: List[Subtype] = list(range(1,51))):
+    def __init__(
+        self,
+        train: bool,
+        conf: ConfDataset,
+        corpus: AbstractCorpus,
+    ):
         """
         Args:
             train: train_dataset if True else validation/test_dataset.
             conf: Configuration of this dataset.
-            subtypes: Sub corpus types.
+            corpus: Corpus instance
         """
-
-        # Design Notes:
-        #   Dataset archive name:
-        #     Dataset contents differ based on argument,
-        #     so archive should differ when arguments differ.
-        #     It is guaranteed by name by argument hash.
 
         # Store parameters.
         self.conf = conf
         self._train = train
-
-        self._corpus = LJSpeech(conf.corpus)
-        arg_hash = hash_args(subtypes, conf.preprocess.target_sr)
+        self._corpus = corpus
+        arg_hash = hash_args(
+            conf.preprocess.bits_mulaw,
+            conf.preprocess.stft_hop_length,
+            conf.preprocess.target_sr,
+        )
         archive_name = f"{arg_hash}.zip"
 
         archive_root = conf.adress_data_root
         # Directory to which contents are extracted and archive is placed
         # if adress is not provided.
         local_root = Path(".")/"tmp"/"LJSpeech_mel_mulaw"
-        
+
         # Archive: placed in given adress (conf) or default adress (local dataset directory)
         adress_archive_given = f"{archive_root}/datasets/LJSpeech/{archive_name}" if archive_root else None
         adress_archive_default = str(local_root/"archive"/archive_name)
@@ -78,7 +83,7 @@ class LJSpeechMelMulaw(Dataset):
         self._path_contents = local_root/"contents"/arg_hash
 
         # Prepare data identities.
-        self._ids: List[ItemIdLJSpeech] = list(filter(lambda id: id.subtype in subtypes, self._corpus.get_identities()))
+        self._ids: List[ItemId] = self._corpus.get_identities()
 
         # Deploy dataset contents.
         contents_acquired = try_to_acquire_archive_contents(adress_archive, self._path_contents)
@@ -95,19 +100,19 @@ class LJSpeechMelMulaw(Dataset):
 
         self._corpus.get_contents()
         print("Preprocessing...")
-        for id in self._ids:
-            path_i_wav = self._corpus.get_item_path(id)
-            path_o_mulaw = get_dataset_mulaw_path(self._path_contents, id)
-            path_o_mel = get_dataset_mel_path(self._path_contents, id)
+        for item_id in self._ids:
+            path_i_wav = self._corpus.get_item_path(item_id)
+            path_o_mulaw = get_dataset_mulaw_path(self._path_contents, item_id)
+            path_o_mel = get_dataset_mel_path(self._path_contents, item_id)
             preprocess_mel_mulaw(path_i_wav, path_o_mel, path_o_mulaw, self.conf.preprocess)
         print("Preprocessed.")
 
-    def _load_datum(self, id: ItemIdLJSpeech) -> Tuple[Tensor, Tensor]:
+    def _load_datum(self, item_id: ItemId) -> Tuple[Tensor, Tensor]:
 
         # Tensor(T_mel, freq)
-        mel: Tensor = load(get_dataset_mel_path(self._path_contents, id))
+        mel: Tensor = load(get_dataset_mel_path(self._path_contents, item_id))
         # Tensor(T_mel * hop_length,)
-        mulaw: Tensor = load(get_dataset_mulaw_path(self._path_contents, id))
+        mulaw: Tensor = load(get_dataset_mulaw_path(self._path_contents, item_id))
 
         if self._train:
             # Time-directional random clipping

@@ -55,10 +55,10 @@ class ConfData:
     adress_data_root: Optional[str] = MISSING
     loader: ConfLoader = ConfLoader()
     dataset: ConfDataset = ConfDataset(
-        adress_data_root="{..adress_data_root}"
+        adress_data_root="${..adress_data_root}"
     )
     corpus: ConfCorpus = ConfCorpus(
-        root="{..adress_data_root}",
+        root="${..adress_data_root}",
     )
 
 class MelMulawDataModule(LightningDataModule):

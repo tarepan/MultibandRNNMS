@@ -55,16 +55,14 @@ def dataset_adress(
     return archive_file, contents_dir
 
 
-def get_dataset_mulaw_path(dir_dataset: Path, item_id: ItemId) -> Path:
-    """Get waveform item path in dataset.
-    """
-    return dir_dataset / f"{item_id.speaker}" / "mulaws" / f"{item_id.name}.mulaw.pt"
+def generate_path_getter(data_name: str, dir_dataset: Path):
+    """Generate getter of dataset's datum path"""
 
+    def path_getter(item_id: ItemId) -> Path:
+        file_name = f"{item_id.name}.{data_name}.pt"
+        return dir_dataset / f"{item_id.speaker}" / f"{data_name}s" / file_name
 
-def get_dataset_mel_path(dir_dataset: Path, item_id: ItemId) -> Path:
-    """Get mel-spec item path in dataset.
-    """
-    return dir_dataset / f"{item_id.speaker}" / "mels" / f"{item_id.name}.mel.pt"
+    return path_getter
 
 
 @dataclass
@@ -114,6 +112,10 @@ class MelMulaw(Dataset):
             arg_hash,
         )
 
+        # Prepare datum path getter.
+        self.get_path_mel = generate_path_getter("mel", self._path_contents)
+        self.get_path_mulaw = generate_path_getter("mulaw", self._path_contents)
+
         # Prepare data identities.
         self._ids: List[ItemId] = self._corpus.get_identities()
 
@@ -133,18 +135,20 @@ class MelMulaw(Dataset):
         self._corpus.get_contents()
         print("Preprocessing...")
         for item_id in self._ids:
-            path_i_wav = self._corpus.get_item_path(item_id)
-            path_o_mulaw = get_dataset_mulaw_path(self._path_contents, item_id)
-            path_o_mel = get_dataset_mel_path(self._path_contents, item_id)
-            preprocess_mel_mulaw(path_i_wav, path_o_mel, path_o_mulaw, self.conf.preprocess)
+            preprocess_mel_mulaw(
+                self._corpus.get_item_path(item_id),
+                self.get_path_mel(item_id),
+                self.get_path_mulaw(item_id),
+                self.conf.preprocess
+            )
         print("Preprocessed.")
 
     def _load_datum(self, item_id: ItemId) -> Tuple[Tensor, Tensor]:
 
         # Tensor(T_mel, freq)
-        mel: Tensor = load(get_dataset_mel_path(self._path_contents, item_id))
+        mel: Tensor = load(self.get_path_mel(item_id))
         # Tensor(T_mel * hop_length,)
-        mulaw: Tensor = load(get_dataset_mulaw_path(self._path_contents, item_id))
+        mulaw: Tensor = load(self.get_path_mulaw(item_id))
 
         if self._train:
             # Time-directional random clipping

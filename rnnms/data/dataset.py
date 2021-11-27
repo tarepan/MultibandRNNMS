@@ -8,6 +8,7 @@ from dataclasses import dataclass
 
 from torch import Tensor, load
 from torch.utils.data import Dataset
+from tqdm import tqdm
 from omegaconf import MISSING
 from speechcorpusy.interface import AbstractCorpus, ItemId
 from speechcorpusy.components.archive import hash_args
@@ -133,15 +134,13 @@ class MelMulaw(Dataset):
         """
 
         self._corpus.get_contents()
-        print("Preprocessing...")
-        for item_id in self._ids:
+        for item_id in tqdm(self._ids, desc="Preprocessing", unit="utterance"):
             preprocess_mel_mulaw(
                 self._corpus.get_item_path(item_id),
                 self.get_path_mel(item_id),
                 self.get_path_mulaw(item_id),
                 self.conf.preprocess
             )
-        print("Preprocessed.")
 
     def _load_datum(self, item_id: ItemId) -> Tuple[Tensor, Tensor]:
 

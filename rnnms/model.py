@@ -1,7 +1,10 @@
+"""RNNMS PyTorch-Lightnig model"""
+
+
 from typing import Tuple
 from dataclasses import dataclass
 
-from torch import no_grad, Tensor
+from torch import Tensor
 import torch.nn.functional as F
 from torch.optim import Adam
 from torch.optim.lr_scheduler import StepLR
@@ -57,7 +60,8 @@ class RNN_MS(pl.LightningModule):
         return {"loss": loss}
 
     def validation_step(self, batch: Tuple[Tensor, Tensor], batch_idx: int):
-        """full length needed & padding is not good (long white seems to be not good for RNN) => cannot batch (batch=1)
+        """full length needed & padding is not good (long white seems to be not good for RNN)
+        => cannot batch (batch=1)
         """
 
         _, mels = batch

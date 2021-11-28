@@ -1,3 +1,6 @@
+"""Decoder networks"""
+
+
 from dataclasses import dataclass
 
 import torch
@@ -65,12 +68,11 @@ class C_eAR_GenRNN(nn.Module):
     def forward(self, reference_sample: Tensor, i_cnd_series: Tensor) -> Tensor:
         """Forward for training.
 
-        Forward RNN computation for training.
+        Forward RNN computation for training with teacher-forcing.
         This is for training, so there is no sampling.
-        For training, auto-regressive input is replaced by self-supervised input (`reference_sample`).
 
         Args:
-            reference_sample: Reference sample (series) for for self-supervised learning
+            reference_sample: Reference sample series for teacher-forcing
             i_cnd_series (Tensor(Batch, Time, dim_latent)): conditional input vector series
 
         Returns:

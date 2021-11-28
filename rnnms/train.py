@@ -1,3 +1,6 @@
+"""Train RNNMS"""
+
+
 from typing import Optional
 from enum import Enum
 import os
@@ -16,6 +19,7 @@ from .model import RNN_MS, ConfRNN_MS
 
 
 class Profiler(Enum):
+    """PyTorch-Lightning's Profiler types"""
     SIMPLE = "simple"
     ADVANCED = "advanced"
 
@@ -53,8 +57,11 @@ def train(conf: ConfTrain, datamodule: LightningDataModule) -> None:
     """Train RNN_MS on PyTorch-Lightning.
     """
 
-    # [todo]: Use snake_case
-    ckpt_and_logging = CheckpointAndLogging(conf.ckpt_log.dir_root, conf.ckpt_log.name_exp, conf.ckpt_log.name_version)
+    ckpt_and_logging = CheckpointAndLogging(
+        conf.ckpt_log.dir_root,
+        conf.ckpt_log.name_exp,
+        conf.ckpt_log.name_version
+    )
     # setup
     model = RNN_MS(conf.model)
 
@@ -98,15 +105,19 @@ class CheckpointAndLogging:
                 events.out.tfevents.{xxxxyyyyzzzz} # TensorBoard log file.
     """
 
-    # [PL's Trainer](https://pytorch-lightning.readthedocs.io/en/stable/trainer.html#trainer-class-api)
+    # [PL's Trainer]
+    # (https://pytorch-lightning.readthedocs.io/en/stable/trainer.html#trainer-class-api)
     default_root_dir: Optional[str]
     resume_from_checkpoint: Optional[str]
-    # [PL's TensorBoardLogger](https://pytorch-lightning.readthedocs.io/en/stable/logging.html#tensorboard)
+    # [PL's TensorBoardLogger]
+    # (https://pytorch-lightning.readthedocs.io/en/stable/logging.html#tensorboard)
     save_dir: str
     name: str
     version: str
-    # [PL's ModelCheckpoint](https://pytorch-lightning.readthedocs.io/en/stable/generated/pytorch_lightning.callbacks.ModelCheckpoint.html#pytorch_lightning.callbacks.ModelCheckpoint)
-    # dirpath: Implicitly inferred from `default_root_dir`, `name` and `version` by PyTorch-Lightning
+    # [PL's ModelCheckpoint]
+    # (https://pytorch-lightning.readthedocs.io/en/stable/generated/
+    # pytorch_lightning.callbacks.ModelCheckpoint.html#pytorch_lightning.callbacks.ModelCheckpoint)
+    # dirpath: Inferred from `default_root_dir`, `name` and `version` by PyTorch-Lightning
 
     def __init__(
         self,
@@ -120,7 +131,8 @@ class CheckpointAndLogging:
 
         # PL's Trainer
         self.default_root_dir = dir_root
-        self.resume_from_checkpoint = path_ckpt if get_filesystem(path_ckpt).exists(path_ckpt) else None
+        exists = get_filesystem(path_ckpt).exists(path_ckpt)
+        self.resume_from_checkpoint = path_ckpt if exists else None
 
         # TB's TensorBoardLogger
         self.save_dir = dir_root

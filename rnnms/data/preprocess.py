@@ -1,3 +1,6 @@
+"""Preprocessing"""
+
+
 from pathlib import Path
 from dataclasses import dataclass
 
@@ -19,7 +22,7 @@ class ConfMelspectrogram:
         preemph:
         top_db:
         ref_db:
-        n_mels: Domension of mel frequency (from paper, 'with 80 coefficients and frequencies ranging from 50 Hz to 12 kHz.' (12 kHz = sr/2))
+        n_mels: Domension of mel frequency
         fmin:
     """
     sr: int = MISSING
@@ -164,5 +167,4 @@ def preprocess_mel_mulaw(
     path_o_mel.parent.mkdir(parents=True, exist_ok=True)
     save(FloatTensor(logmel.T), path_o_mel)
     path_o_mulaw.parent.mkdir(parents=True, exist_ok=True)
-    # todo: can be `torch.ShortTensor`?
     save(LongTensor(mulaw), path_o_mulaw)

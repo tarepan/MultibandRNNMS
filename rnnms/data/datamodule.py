@@ -1,3 +1,6 @@
+"""MulawMel datamodule"""
+
+
 from typing import Optional
 from os import cpu_count
 from dataclasses import dataclass
@@ -41,8 +44,8 @@ class DataLoaderPerformance:
         #   cpu_count() is not appropriate under the multi-GPU condition.
 
         if num_workers is None:
-            c = cpu_count()
-            num_workers = c if c is not None else 0
+            n_cpu = cpu_count()
+            num_workers = n_cpu if n_cpu is not None else 0
         self.num_workers: int = num_workers
         self.pin_memory: bool = pin_memory if pin_memory is not None else True
 
@@ -130,6 +133,7 @@ class MelMulawDataModule(LightningDataModule):
 
 
 def generate_datamodule(conf: ConfData) -> MelMulawDataModule:
+    """Generate datamodule with given corpus"""
     if conf.data_name in presets.corpus_list:
         print(f"Corpus: {conf.data_name}")
         corpus_cls = getattr(presets, conf.data_name)

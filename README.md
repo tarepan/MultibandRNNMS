@@ -69,9 +69,9 @@ Copy [`rnnms.main_train`] and replace DataModule.
 
 | property      |  paper           | this repo       |
 |:--------------|:-----------------|:----------------|
-| sampling rate | 24 kHz           |   16 kHz        |
+| sampling rate | 24 kHz           | 16 kHz          |
 | AR input      | one-hot          | embedding       |
-| Dataset       | internal? 74 spk | LJSpeech, 1 spk |
+| Dataset       | internal? 74 spk | JVS, 100 spk    |
 | Presicion     |   -              | 32/16 Mixed     |
 
 ## Results

@@ -14,7 +14,7 @@ Neural vocoder **"RNN_MS"** with PyTorch.
 - [How to Use](#how-to-use)
 - [System Details](#system-details)
 - [Results](#results)
-- [Original paper](#original-paper)
+- [References](#references)
 
 ![network](network.png?raw=true "Robust Universal Neural Vocoding")
 
@@ -32,6 +32,8 @@ Jump to ☞ [![Open In Colab](https://colab.research.google.com/assets/colab-bad
 ### 1. Install <!-- omit in toc -->
 
 ```bash
+# pip install "torch==1.10.0" -q      # Based on your environment (validated with v1.10)
+# pip install "torchaudio==0.10.0" -q # Based on your environment
 pip install git+https://github.com/tarepan/UniversalVocoding
 ```
 
@@ -82,7 +84,8 @@ Copy [`rnnms.main_train`] and replace DataModule.
 
 It takes about 2days for full training.  
 
-## Original paper
+## References
+### Original paper <!-- omit in toc -->
 [![Paper](http://img.shields.io/badge/paper-arxiv.1811.06292-B31B1B.svg)][paper]  
 <!-- https://arxiv2bibtex.org/?q=1811.06292&format=bibtex -->
 ```
@@ -94,20 +97,9 @@ Eprint = {arXiv:1811.06292},
 }
 ```
 
-## Acknowlegements <!-- omit in toc -->
-- [bshall/UniversalVocoding]
-  - Model and hyperparams are totally based on this repository.
+### Acknowlegements <!-- omit in toc -->
+- [bshall/UniversalVocoding]: Model and hyperparams are totally based on this repository
 
-## Dependency Notes <!-- omit in toc -->
-### PyTorch version <!-- omit in toc -->
-PyTorch version: PyTorch v1.9 is working (We checked with v1.9.0).  
-
-For dependency resolution, we do **NOT** explicitly specify the compatible versions.  
-PyTorch have several distributions for various environment (e.g. compatible CUDA version.)  
-Unfortunately it make dependency version management complicated for dependency management system.  
-In our case, the system `poetry` cannot handle cuda variant string (e.g. `torch>=1.6.0` cannot accept `1.6.0+cu101`.)  
-In order to resolve this problem, we use `torch==*`, it is equal to no version specification.  
-`Setup.py` could resolve this problem (e.g. `torchaudio`'s `setup.py`), but we will not bet our effort to this hacky method.  
 
 [paper]:https://arxiv.org/abs/1811.06292
 [notebook]:https://colab.research.google.com/github/tarepan/UniversalVocoding/blob/main/rnnms.ipynb

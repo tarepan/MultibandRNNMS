@@ -80,23 +80,7 @@ Copy [`rnnms.main_train`] and replace DataModule.
 1.1 [iter/sec] @ NVIDIA T4 on Google Colaboratory (AMP+, num_workers=8)  
 (1.1 [iter/sec] with [bshall/UniversalVocoding], same setup)  
 
-### Knowledge from Original Repository <!-- omit in toc -->
-- training speed
-  - config file
-    - n_steps: 150k (~1.6 day with 1.1 it/s)
-- input spectrogram [issue#4](https://github.com/bshall/UniversalVocoding/issues/4)
-  - more "smoothed" spectrogram could be used
-    - demo of VQ-VAE output (smoothed spec) => RNN_MS => .wav
-- sensitivity to spectrogram shape [issue#3](https://github.com/bshall/UniversalVocoding/issues/3)
-  - stable training regardless of shape
-    - n_fft=1024 also work well
-- old 9-bit model
-  - training speed [issue#5](https://github.com/bshall/UniversalVocoding/issues/5)
-    - intelligible samples by 20k steps
-    - decent results by 60k-80k steps
-    - no data of father step training
-  - other dataset [issue#2](https://github.com/bshall/UniversalVocoding/issues/2)
-    - only ZeroSpeech2019, not yet (seems to be interested in other dataset?)
+It takes about 2days for full training.  
 
 ## Original paper
 [![Paper](http://img.shields.io/badge/paper-arxiv.1811.06292-B31B1B.svg)][paper]  

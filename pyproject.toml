@@ -18,6 +18,7 @@ pyloudnorm = "^0.1.0"
 librosa = "^0.8.0"
 omegaconf = "^2.1.1"
 speechcorpusy = {git = "https://github.com/tarepan/speechcorpusy.git", rev = "main"}
+speechdatasety = {git = "https://github.com/tarepan/speechdatasety", rev = "main"}
 tqdm = "^4.0.0"
 
 [tool.poetry.dev-dependencies]

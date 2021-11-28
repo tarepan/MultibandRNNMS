@@ -10,60 +10,13 @@ from torch import Tensor, load
 from torch.utils.data import Dataset
 from tqdm import tqdm
 from omegaconf import MISSING
-from speechcorpusy.interface import AbstractCorpus, ItemId
-from speechcorpusy.components.archive import hash_args
-from speechcorpusy.components.archive import try_to_acquire_archive_contents, save_archive
+
+from speechdatasety.interface.speechcorpusy import AbstractCorpus, ItemId
+from speechdatasety.helper.archive import hash_args
+from speechdatasety.helper.archive import try_to_acquire_archive_contents, save_archive
+from speechdatasety.helper.adress import dataset_adress, generate_path_getter
 
 from .preprocess import ConfPreprocessing, preprocess_mel_mulaw
-
-
-def dataset_adress(
-    root_adress: Optional[str],
-    corpus_name: str,
-    dataset_type: str,
-    preprocess_args,
-    ) -> Tuple[str, Path]:
-    """Path of dataset archive file and contents directory.
-
-    Args:
-        root_adress:
-        corpus_name:
-        dataset_type:
-        preprocess_args:
-    Returns: [archive file adress, contents directory path]
-    """
-    # Design Notes:
-    #   Why not `Path` object? -> Archive adress could be remote url
-    #
-    # Original Data (corpus) / Prepared Data (dataset) / Transformation (preprocss)
-    #   If use different original data, everything change.
-    #   Original item can be transformed into different type of data.
-    #   Even if data type is same, value could be changed by processing parameters.
-    #
-    # Directory structure:
-    #     datasets/{corpus_name}/{dataset_type}/
-    #         archive/{preprocess_args}.zip
-    #         contents/{preprocess_args}/{actual_data_here}
-
-    # Contents: Placed under default local directory
-    contents_root = local_root = "./tmp"
-    # Archive: Placed under given adress or default local directory
-    archive_root = root_adress or local_root
-
-    rel_dataset = f"datasets/{corpus_name}/{dataset_type}"
-    archive_file = f"{archive_root}/{rel_dataset}/archive/{preprocess_args}.zip"
-    contents_dir = f"{contents_root}/{rel_dataset}/contents/{preprocess_args}"
-    return archive_file, contents_dir
-
-
-def generate_path_getter(data_name: str, dir_dataset: Path):
-    """Generate getter of dataset's datum path"""
-
-    def path_getter(item_id: ItemId) -> Path:
-        file_name = f"{item_id.name}.{data_name}.pt"
-        return dir_dataset / f"{item_id.speaker}" / f"{data_name}s" / file_name
-
-    return path_getter
 
 
 @dataclass

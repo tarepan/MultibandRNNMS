@@ -38,8 +38,8 @@ pip install git+https://github.com/tarepan/UniversalVocoding
 ```
 
 ### 2. Data & Preprocessing <!-- omit in toc -->
-"Batteries Included" 😉  
-`dataset` transparently download corpus and preprocess it for you.  
+"Batteries Included".  
+RNNMS transparently download corpus and preprocess it for you 😉  
 
 ### 3. Train <!-- omit in toc -->
 ```bash
@@ -47,6 +47,15 @@ python -m rnnms.main_train
 ```
 
 For arguments, check [./rnnms/config.py](https://github.com/tarepan/UniversalVocoding/blob/main/rnnms/config.py)  
+
+### Advanced: Other datasets <!-- omit in toc -->
+You can switch dataset with arguments.  
+All [`speechcorpusy`](https://github.com/tarepan/speechcorpusy)'s preset corpuses are supported.  
+
+```bash
+# LJSpeech corpus
+python -m rnnms.main_train data.data_name=LJ
+```
 
 ### Advanced: Custom dataset <!-- omit in toc -->
 Copy [`rnnms.main_train`] and replace DataModule.  

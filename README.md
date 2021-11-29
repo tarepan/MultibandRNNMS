@@ -16,11 +16,6 @@ Neural vocoder **"RNN_MS"** with PyTorch.
 - [Results](#results)
 - [References](#references)
 
-![network](network.png?raw=true "Robust Universal Neural Vocoding")
-
-This repository is PyTorch-Lightning re-implementation of [bshall/UniversalVocoding].  
-Almost all code are rewriten.  
-
 ## Demo
 <!-- [Audio sample page](https://tarepan.github.io/UniversalVocoding).   -->
 ToDO: Link super great impressive high-quatity audio demo.  
@@ -107,7 +102,7 @@ Eprint = {arXiv:1811.06292},
 ```
 
 ### Acknowlegements <!-- omit in toc -->
-- [bshall/UniversalVocoding]: Model and hyperparams are totally based on this repository
+- [bshall/UniversalVocoding]: Model and hyperparams are totally based on this repository. All codes are re-written.
 
 
 [paper]:https://arxiv.org/abs/1811.06292

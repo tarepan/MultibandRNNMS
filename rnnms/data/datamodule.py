@@ -10,7 +10,7 @@ from torch.utils.data import random_split, DataLoader
 from pytorch_lightning import LightningDataModule
 from omegaconf import MISSING
 from speechcorpusy.interface import AbstractCorpus, ConfCorpus
-from speechcorpusy import presets
+from speechcorpusy import load_preset
 
 from .dataset import ConfDataset, MelMulaw
 
@@ -134,10 +134,5 @@ class MelMulawDataModule(LightningDataModule):
 
 def generate_datamodule(conf: ConfData) -> MelMulawDataModule:
     """Generate datamodule with given corpus"""
-    if conf.data_name in presets.corpus_list:
-        print(f"Corpus: {conf.data_name}")
-        corpus_cls = getattr(presets, conf.data_name)
-    else:
-        raise Exception(f"Corpus '{conf.data_name}' is not supported.")
-
-    return MelMulawDataModule(conf, corpus_cls(conf.corpus))
+    corpus = load_preset(conf.data_name, conf=conf.corpus)
+    return MelMulawDataModule(conf, corpus)

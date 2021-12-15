@@ -84,5 +84,5 @@ It takes about Ydays for full training.
 
 
 [paper]:https://arxiv.org/abs/1811.06292
-[notebook]:https://colab.research.google.com/github/tarepan/MultibandRNNMS/blob/main/rnnms.ipynb
+[notebook]:https://colab.research.google.com/github/tarepan/MultibandRNNMS/blob/main/mbrnnms.ipynb
 [bshall/UniversalVocoding]:https://github.com/bshall/UniversalVocoding

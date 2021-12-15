@@ -37,10 +37,10 @@ RNNMS transparently download corpus and preprocess it for you 😉
 
 ### 3. Train <!-- omit in toc -->
 ```bash
-python -m rnnms.main_train
+python -m mbrnnms.main_train
 ```
 
-For arguments, check [./rnnms/config.py](https://github.com/tarepan/MultibandRNNMS/blob/main/rnnms/config.py)  
+For arguments, check [./mbrnnms/config.py](https://github.com/tarepan/MultibandRNNMS/blob/main/mbrnnms/config.py)  
 
 ### Advanced: Other datasets <!-- omit in toc -->
 You can switch dataset with arguments.  
@@ -48,11 +48,11 @@ All [`speechcorpusy`](https://github.com/tarepan/speechcorpusy)'s preset corpuse
 
 ```bash
 # LJSpeech corpus
-python -m rnnms.main_train data.data_name=LJ
+python -m mbrnnms.main_train data.data_name=LJ
 ```
 
 ### Advanced: Custom dataset <!-- omit in toc -->
-Copy [`rnnms.main_train`] and replace DataModule.  
+Copy [`mbrnnms.main_train`] and replace DataModule.  
 
 ```python
     # datamodule = LJSpeechDataModule(batch_size, ...)
@@ -60,7 +60,7 @@ Copy [`rnnms.main_train`] and replace DataModule.
     # That's all!
 ```
 
-[`rnnms.main_train`]:https://github.com/tarepan/MultibandRNNMS/blob/main/rnnms/main_train.py
+[`mbrnnms.main_train`]:https://github.com/tarepan/MultibandRNNMS/blob/main/mbrnnms/main_train.py
 
 ## System Details
 ### Model <!-- omit in toc -->

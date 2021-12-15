@@ -4,9 +4,9 @@
 import pytorch_lightning as pl
 import torchaudio
 
-from rnnms.data.datamodule import generate_datamodule
-from rnnms.train import train
-from rnnms.config import load_conf
+from mbrnnms.data.datamodule import generate_datamodule
+from mbrnnms.train import train
+from mbrnnms.config import load_conf
 
 
 def main_train():

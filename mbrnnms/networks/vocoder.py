@@ -38,67 +38,66 @@ class RNNMSVocoder(nn.Module):
     """
     def __init__(self, conf: ConfRNNMSVocoder):
         super().__init__()
-        self.time_upsampling_factor = conf.upsampling_t
+        self._time_upsampling_factor = conf.upsampling_t
 
         # PreNet which transform conditioning inputs into latent representation
-        self.prenet = RecurrentPreNet(conf.prenet)
+        self._prenet = RecurrentPreNet(conf.prenet)
         # AR which yeild sample probability autoregressively
-        self.ar = C_eAR_GenRNN(conf.wave_ar)
-        self.mulaw_dec = MuLawDecoding(2**conf.bits_mu_law)
+        self._ar = C_eAR_GenRNN(conf.wave_ar)
+        self._mulaw_dec = MuLawDecoding(2**conf.bits_mu_law)
 
-    def forward(self, wave_mu_law: Tensor, mels: Tensor) -> Tensor:
-        """Forward computation for training.
+    def forward(self, wave_mu_law: Tensor, cond_series: Tensor) -> Tensor:
+    # def forward(self, cond_series: Tensor, wave_mu_law: Tensor) -> Tensor:
+        """Generate bit-energy series with teacher-forcing.
 
-        Arguments:
-            wave_mu_law: mu-law encoded waveform
-            mels (Tensor(Batch, Time, Freq)): preprocessed mel-spectrogram
+        Args:
+            wave_mu_law (Batch, T_wave): mu-law waveforms (index series) for teacher-forcing
+            cond_series (Batch, T_cond, Feat): conditioning series
 
         Returns:
-            Tensor(Batch, Time, before_softmax) Generated mu-law encoded waveform
+            (Batch, T_wave, Energy) Generated mu-law encoded waveforms
         """
-        # Latent representation
-        # Tensor(batch, T_mel, size_latent)
-        latents = self.prenet(mels)
+        # Conditioning to Latent :: (B, T_cond, Feat) => (B, T_cond, Latent)
+        latents = self._prenet(cond_series)
 
-        # Cond. Upsampling
-        # Tensor(batch, T_mel*hop_length, size_latent)
+        # Latent Time Upsampling :: (B, T_cond, Latent) => (B, T_wave, Latent)
         latents_upsampled: Tensor = F.interpolate(
             latents.transpose(1, 2),
-            scale_factor=self.time_upsampling_factor
+            scale_factor=self._time_upsampling_factor
         ).transpose(1, 2)
 
-        # Autoregressive
-        bits_energy_series = self.ar(wave_mu_law, latents_upsampled)
+        # Sample AR :: (B, T_wave, Latent) => (B, T_wave, Energy)
+        bits_energy_series = self._ar(wave_mu_law, latents_upsampled)
 
         return bits_energy_series
 
-    def generate(self, mel: Tensor) -> Tensor:
-        """Generate waveform from mel-spectrogram.
+    def generate(self, cond_series: Tensor) -> Tensor:
+        """Generate waveforms from conditioning series.
 
         Input has variable length, and long zero padding is not good for RNN,
         so batch_size must be 1.
 
         Args:
-            mel (Tensor(1, T_mel, freq)): Mel-spectrogram tensor.
+            cond_series (1, T_cond, Feat): Conditioning series
         Returns:
-            (Tensor(1, T_mel * hop_length)) Generated waveform. A sample point is in range [-1, 1].
+            (1, T_wave): Generated raw waveform. A sample point is in range [-1, 1].
         """
 
         # Transform conditionings into upsampled latents
-        latents = self.prenet(mel)
+        latents = self._prenet(cond_series)
         latents_upsampled: Tensor = F.interpolate(
             latents.transpose(1, 2),
-            scale_factor=self.time_upsampling_factor
+            scale_factor=self._time_upsampling_factor
         ).transpose(1, 2)
 
         # Sample a waveform (sequence of μ-law encoded samples)
-        output_mu_law = self.ar.generate(latents_upsampled)
+        output_mu_law = self._ar.generate(latents_upsampled)
 
         # μ-law expansion.
         # range: [0, 2^bit -1] => [-1, 1]
         # [PyTorch](https://pytorch.org/audio/stable/transforms.html#mulawdecoding)
         # bshall/UniversalVocoding use librosa,
         # so range adaption ([0, n] -> [-n/2, n/2]) was needed.
-        output_wave: Tensor = self.mulaw_dec(output_mu_law)
+        output_wave: Tensor = self._mulaw_dec(output_mu_law)
 
         return output_wave

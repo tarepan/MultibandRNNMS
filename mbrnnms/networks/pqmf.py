@@ -13,16 +13,20 @@ import torch.nn.functional as F
 from scipy.signal import kaiser
 
 
-def design_prototype_filter(taps=62, cutoff_ratio=0.142, beta=9.0):
+def design_prototype_filter(
+    taps: int = 62,
+    cutoff_ratio: float = 0.142,
+    beta: float = 9.0
+    ) -> np.ndarray:
     """Design prototype filter for PQMF.
     This method is based on `A Kaiser window approach for the design of prototype
     filters of cosine modulated filterbanks`_.
     Args:
-        taps (int): The number of filter taps.
-        cutoff_ratio (float): Cut-off frequency ratio.
-        beta (float): Beta coefficient for kaiser window.
+        taps: The number of filter taps.
+        cutoff_ratio: Cut-off frequency ratio.
+        beta: Beta coefficient for kaiser window.
     Returns:
-        ndarray: Impluse response of prototype filter (taps + 1,).
+        Impluse response of prototype filter (taps + 1,).
     .. _`A Kaiser window approach for the design of prototype filters of cosine modulated filterbanks`:
         https://ieeexplore.ieee.org/abstract/document/681427
     """
@@ -52,15 +56,20 @@ class PQMF(torch.nn.Module):
         https://ieeexplore.ieee.org/document/258122
     """
 
-    def __init__(self, subbands=4, taps=62, cutoff_ratio=0.142, beta=9.0):
+    def __init__(self,
+        subbands: int = 4,
+        taps: int = 62,
+        cutoff_ratio: float = 0.142,
+        beta: float = 9.0
+        ):
         """Initilize PQMF module.
         The cutoff_ratio and beta parameters are optimized for #subbands = 4.
         See dicussion in https://github.com/kan-bayashi/ParallelWaveGAN/issues/195.
         Args:
-            subbands (int): The number of subbands.
-            taps (int): The number of filter taps.
-            cutoff_ratio (float): Cut-off frequency ratio.
-            beta (float): Beta coefficient for kaiser window.
+            subbands: The number of subbands.
+            taps: The number of filter taps.
+            cutoff_ratio: Cut-off frequency ratio.
+            beta: Beta coefficient for kaiser window.
         """
         super(PQMF, self).__init__()
 
@@ -111,9 +120,9 @@ class PQMF(torch.nn.Module):
     def analysis(self, x: Tensor) -> Tensor:
         """Analysis with PQMF.
         Args:
-            x (Tensor): Input tensor (B, 1, T).
+            x (Batch, 1, T_full): Full-band signals
         Returns:
-            Tensor: Output tensor (B, subbands, T // subbands).
+            (Batch, Band, T_sub): Sub-band signals, T_sub == T_full // subbands
         """
         x = F.conv1d(self.pad_fn(x), self.analysis_filter)
         return F.conv1d(x, self.updown_filter, stride=self.subbands)
@@ -121,9 +130,9 @@ class PQMF(torch.nn.Module):
     def synthesis(self, x: Tensor) -> Tensor:
         """Synthesis with PQMF.
         Args:
-            x (Tensor): Input tensor (B, subbands, T // subbands).
+            x (Batch, Band, T_sub): Sub-band signals, T_sub == T_full // subbands
         Returns:
-            Tensor: Output tensor (B, 1, T).
+            (Batch, 1, T_full): Full-band signals
         """
         # NOTE(kan-bayashi): Power will be dreased so here multipy by # subbands.
         #   Not sure this is the correct way, it is better to check again.

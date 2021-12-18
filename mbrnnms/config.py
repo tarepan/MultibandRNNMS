@@ -16,7 +16,7 @@ dim_mel: 80
 stride_stft: 200
 n_band: 4
 data:
-    data_name: LJ
+    data_name: JVS
     adress_data_root: null
     loader:
         batch_size: 32
@@ -63,7 +63,7 @@ train:
                 # dim_i: local sync
                 # dim_o: local sync
                 num_layers: 2
-                bidirectional: True
+                bidirectional: False
             wave_ar:
                 # size_i_cnd: local sync
                 size_i_embed_ar: 256

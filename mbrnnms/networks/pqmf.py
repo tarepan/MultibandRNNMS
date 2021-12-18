@@ -127,17 +127,17 @@ class PQMF(torch.nn.Module):
         x = F.conv1d(self.pad_fn(x), self.analysis_filter)
         return F.conv1d(x, self.updown_filter, stride=self.subbands)
 
-    def synthesis(self, x: Tensor) -> Tensor:
+    def synthesis(self, i_subbands: Tensor) -> Tensor:
         """Synthesis with PQMF.
         Args:
-            x (Batch, Band, T_sub): Sub-band signals, T_sub == T_full // subbands
+            i_subbands (Batch, Band, T_sub): Sub-band signals, T_sub == T_full // subbands
         Returns:
             (Batch, 1, T_full): Full-band signals
         """
         # NOTE(kan-bayashi): Power will be dreased so here multipy by # subbands.
         #   Not sure this is the correct way, it is better to check again.
         # TODO(kan-bayashi): Understand the reconstruction procedure
-        x = F.conv_transpose1d(
-            x, self.updown_filter * self.subbands, stride=self.subbands
+        fullband = F.conv_transpose1d(
+            i_subbands, self.updown_filter * self.subbands, stride=self.subbands
         )
-        return F.conv1d(self.pad_fn(x), self.synthesis_filter)
+        return F.conv1d(self.pad_fn(fullband), self.synthesis_filter)

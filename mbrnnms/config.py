@@ -14,6 +14,7 @@ target_sr: 16000
 bits_mulaw: 10
 dim_mel: 80
 stride_stft: 200
+n_band: 4
 data:
     data_name: LJ
     adress_data_root: null
@@ -57,6 +58,7 @@ train:
             dim_voc_latent: 256
             bits_mu_law: "${bits_mulaw}"
             upsampling_t: "${stride_stft}"
+            n_band: "${n_band}"
             prenet:
                 # dim_i: local sync
                 # dim_o: local sync
@@ -92,6 +94,7 @@ class ConfGlobal:
     bits_mulaw: int = MISSING
     dim_mel: int = MISSING
     stride_stft: int = MISSING
+    n_band: int = MISSING
     data: ConfData = ConfData()
     train: ConfTrain = ConfTrain()
 

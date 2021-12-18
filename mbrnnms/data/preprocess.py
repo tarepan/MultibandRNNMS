@@ -7,8 +7,10 @@ from dataclasses import dataclass
 import librosa
 import numpy as np
 import pyloudnorm as pyln
-from torch import FloatTensor, LongTensor, save
+from torch import FloatTensor, LongTensor, save, from_numpy, cat
 from omegaconf import MISSING
+
+from mbrnnms.networks.pqmf import PQMF
 
 @dataclass
 class ConfMelspectrogram:
@@ -123,13 +125,14 @@ class ConfPreprocessing:
         win_length="${..win_length}",
     )
 
-def preprocess_mel_mulaw(
+def preprocess_mel_mb_mulaw(
     path_i_wav: Path,
     path_o_mel: Path,
     path_o_mulaw: Path,
+    pqmf: PQMF,
     conf: ConfPreprocessing,
 ) -> None:
-    """Transform LJSpeech corpus contents into mel-spectrogram and μ-law waveform.
+    """Transform corpus contents into mel-spectrogram and multiband μ-law waveform.
 
     Before this preprocessing, corpus contents should be deployed.
     wave: Loudness norm + μ-law compression
@@ -143,11 +146,11 @@ def preprocess_mel_mulaw(
 
     # Load wav
     wave: np.ndarray
-    sr: int
-    wave, sr = librosa.load(path_i_wav, sr=conf.target_sr)
+    sampling_rate: int
+    wave, sampling_rate = librosa.load(path_i_wav, sr=conf.target_sr)
 
     # Loudness normalization
-    meter = pyln.Meter(sr)
+    meter = pyln.Meter(sampling_rate)
     loudness = meter.integrated_loudness(wave)
     wave = pyln.normalize.loudness(wave, loudness, -24)
     peak = np.abs(wave).max()
@@ -160,11 +163,25 @@ def preprocess_mel_mulaw(
     # wave -> length-adjusted wave
     wave_length_fit = fit_length(wave, conf.stft_hop_length, conf.win_length)
 
-    # linear wave -> μ-law wave (length fit + μ-law conversion)
-    mulaw = mu_compress(wave_length_fit, conf.bits_mulaw)
+    # (T,) => (B=1, Band=1, T) => (B=1, Band, T_sub)
+    wave_bands_raw = pqmf.analysis(from_numpy(wave_length_fit).view(1,1,-1))
 
+    # linear wave -> μ-law wave (length fit + μ-law conversion)
+    # (B=1, Band, T_sub) => (T_sub,) xBand => (B=1, Band, T_sub)
+    mulaw_b1 = mu_compress(wave_bands_raw[0, 0].detach().numpy(), conf.bits_mulaw)
+    mulaw_b2 = mu_compress(wave_bands_raw[0, 1].detach().numpy(), conf.bits_mulaw)
+    mulaw_b3 = mu_compress(wave_bands_raw[0, 2].detach().numpy(), conf.bits_mulaw)
+    mulaw_b4 = mu_compress(wave_bands_raw[0, 3].detach().numpy(), conf.bits_mulaw)
+    wave_mb_mulaw = cat((
+            from_numpy(mulaw_b1).view(1, 1, -1),
+            from_numpy(mulaw_b2).view(1, 1, -1),
+            from_numpy(mulaw_b3).view(1, 1, -1),
+            from_numpy(mulaw_b4).view(1, 1, -1),
+         ),
+         dim=1
+    )
     # save
     path_o_mel.parent.mkdir(parents=True, exist_ok=True)
     save(FloatTensor(logmel.T), path_o_mel)
     path_o_mulaw.parent.mkdir(parents=True, exist_ok=True)
-    save(LongTensor(mulaw), path_o_mulaw)
+    save(LongTensor(wave_mb_mulaw), path_o_mulaw)

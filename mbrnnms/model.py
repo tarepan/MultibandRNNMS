@@ -51,10 +51,18 @@ class RNN_MS(pl.LightningModule):
         """Supervised learning.
         """
 
+        # ::(B, Band, T_sub), (B, ?, ?)
         wave_mu_law, spec_mel = batch
 
-        bits_energy_sereis = self.rnnms(wave_mu_law[:, :-1], spec_mel)
-        loss = F.cross_entropy(bits_energy_sereis.transpose(1, 2), wave_mu_law[:, 1:])
+        # :: => (Batch, Band, T_sub, Energy)
+        bits_energy_sereis = self.rnnms(wave_mu_law[:, :, :-1], spec_mel)
+        # CE loss over bands and times
+        #   energy :: (B, Band, T_sub, E) => (B, E, T_sub, Band)
+        #   GT     :: (B, Band, T_sub)    => (B,    T_sub, Band)
+        loss = F.cross_entropy(
+            bits_energy_sereis.transpose(1, 3),
+            wave_mu_law[:, :, 1:].transpose(1, 2)
+        )
 
         self.log('loss', loss)
         return {"loss": loss}

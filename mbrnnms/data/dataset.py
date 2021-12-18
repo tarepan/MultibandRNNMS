@@ -1,7 +1,6 @@
 """Datasets"""
 
 
-from pathlib import Path
 import random
 from typing import List, Optional, Tuple
 from dataclasses import dataclass
@@ -16,7 +15,9 @@ from speechdatasety.helper.archive import hash_args
 from speechdatasety.helper.archive import try_to_acquire_archive_contents, save_archive
 from speechdatasety.helper.adress import dataset_adress, generate_path_getter
 
-from .preprocess import ConfPreprocessing, preprocess_mel_mulaw
+from mbrnnms.networks.pqmf import PQMF
+
+from .preprocess import ConfPreprocessing, preprocess_mel_mb_mulaw
 
 
 @dataclass
@@ -62,13 +63,13 @@ class MelMulaw(Dataset):
         adress_archive, self._path_contents = dataset_adress(
             conf.adress_data_root,
             corpus.__class__.__name__,
-            "mel_mulaw",
+            "mel_mulaw_mb",
             arg_hash,
         )
 
         # Prepare datum path getter.
         self.get_path_mel = generate_path_getter("mel", self._path_contents)
-        self.get_path_mulaw = generate_path_getter("mulaw", self._path_contents)
+        self.get_path_mulaw = generate_path_getter("mulaw_mb", self._path_contents)
 
         # Prepare data identities.
         self._ids: List[ItemId] = self._corpus.get_identities()
@@ -87,11 +88,13 @@ class MelMulaw(Dataset):
         """
 
         self._corpus.get_contents()
+        pqmf = PQMF()
         for item_id in tqdm(self._ids, desc="Preprocessing", unit="utterance"):
-            preprocess_mel_mulaw(
+            preprocess_mel_mb_mulaw(
                 self._corpus.get_item_path(item_id),
                 self.get_path_mel(item_id),
                 self.get_path_mulaw(item_id),
+                pqmf,
                 self.conf.preprocess
             )
 

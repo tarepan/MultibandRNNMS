@@ -12,7 +12,7 @@ from omegaconf import MISSING
 from speechcorpusy.interface import AbstractCorpus, ConfCorpus
 from speechcorpusy import load_preset
 
-from .dataset import ConfDataset, MelMulaw
+from .dataset import ConfDataset, MBMelMulaw
 
 
 @dataclass
@@ -81,15 +81,15 @@ class MelMulawDataModule(LightningDataModule):
         """Prepare data in dataset.
         """
 
-        MelMulaw(True, self._conf.dataset, self._corpus)
+        MBMelMulaw(True, self._conf.dataset, self._corpus)
 
     def setup(self, stage: Optional[str] = None):
         """Setup train/val/test datasets and batch sizes.
         """
 
         if stage == "fit" or stage is None:
-            dataset_full_train = MelMulaw(True, self._conf.dataset, self._corpus)
-            dataset_full_not_train = MelMulaw(False, self._conf.dataset, self._corpus)
+            dataset_full_train = MBMelMulaw(True, self._conf.dataset, self._corpus)
+            dataset_full_not_train = MBMelMulaw(False, self._conf.dataset, self._corpus)
 
             n_full = len(dataset_full_train)
             # N-3 utterances, fixed-length.
@@ -103,7 +103,7 @@ class MelMulawDataModule(LightningDataModule):
             self.batch_size_val = 1
 
         if stage == "test" or stage is None:
-            self.dataset_test = MelMulaw(False, self._conf.dataset, self._corpus)
+            self.dataset_test = MBMelMulaw(False, self._conf.dataset, self._corpus)
             self.batch_size_test = self._conf.loader.batch_size
 
     def train_dataloader(self):

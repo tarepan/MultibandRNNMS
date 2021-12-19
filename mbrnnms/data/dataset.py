@@ -35,8 +35,8 @@ class ConfDataset:
     n_band: int = MISSING
     preprocess: ConfPreprocessing = ConfPreprocessing(stft_hop_length="${..mel_stft_stride}")
 
-class MelMulaw(Dataset):
-    """Audio mel-spec/mu-law-wave dataset from the corpus.
+class MBMelMulaw(Dataset):
+    """Audio mel-spec/multi-band-mu-law-wave dataset from the corpus.
     """
     def __init__(
         self,
@@ -64,7 +64,7 @@ class MelMulaw(Dataset):
         adress_archive, self._path_contents = dataset_adress(
             conf.adress_data_root,
             corpus.__class__.__name__,
-            "mel_mulaw_mb",
+            self.__class__.__name__,
             arg_hash,
         )
 

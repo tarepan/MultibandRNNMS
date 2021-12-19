@@ -25,6 +25,7 @@ data:
     dataset:
         clip_length_mel: 24
         mel_stft_stride: "${stride_stft}"
+        n_band: "${n_band}"
         preprocess:
             target_sr: "${target_sr}"
             # stft_hop_length: local sync

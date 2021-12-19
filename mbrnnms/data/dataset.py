@@ -32,6 +32,7 @@ class ConfDataset:
     adress_data_root: Optional[str] = MISSING
     clip_length_mel: int = MISSING
     mel_stft_stride: int = MISSING
+    n_band: int = MISSING
     preprocess: ConfPreprocessing = ConfPreprocessing(stft_hop_length="${..mel_stft_stride}")
 
 class MelMulaw(Dataset):
@@ -100,10 +101,10 @@ class MelMulaw(Dataset):
 
     def _load_datum(self, item_id: ItemId) -> Tuple[Tensor, Tensor]:
 
-        # Tensor(T_mel, freq)
+        # Mel-spectrogram :: Tensor(T_mel, freq)
         mel: Tensor = load(self.get_path_mel(item_id))
-        # Tensor(T_mel * hop_length,)
-        mulaw: Tensor = load(self.get_path_mulaw(item_id))
+        # Multiband μ-law :: Tensor(T_mel * hop_length // n_band,)
+        mb_mulaw: Tensor = load(self.get_path_mulaw(item_id))
 
         if self._train:
             # Time-directional random clipping
@@ -116,14 +117,15 @@ class MelMulaw(Dataset):
             mel_clipped = mel[start_mel : end_mel]
 
             # Waveform clipping
-            start_mulaw = self.conf.mel_stft_stride * start_mel
-            end_mulaw = self.conf.mel_stft_stride * end_mel + 1
+            stride = self.conf.mel_stft_stride // self.conf.n_band
+            start_mb_mulaw = stride * start_mel
+            end_mb_mulaw = stride * end_mel + 1
             # (T_mel * hop_length,) -> (clip_length_mel * hop_length,)
-            mulaw_clipped = mulaw[start_mulaw : end_mulaw]
+            mb_mulaw_clipped = mb_mulaw[start_mb_mulaw : end_mb_mulaw]
 
-            return mulaw_clipped, mel_clipped
+            return mb_mulaw_clipped, mel_clipped
         else:
-            return mulaw, mel
+            return mb_mulaw, mel
 
     def __getitem__(self, n: int) -> Tuple[Tensor, Tensor]:
         """Load the n-th sample from the dataset.

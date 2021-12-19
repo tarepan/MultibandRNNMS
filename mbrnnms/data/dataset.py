@@ -121,7 +121,7 @@ class MBMelMulaw(Dataset):
             start_mb_mulaw = stride * start_mel
             end_mb_mulaw = stride * end_mel + 1
             # (Band, T_mel * stride) -> (Band, clip_length_mel * stride)
-            mb_mulaw_clipped = mb_mulaw[start_mb_mulaw : end_mb_mulaw]
+            mb_mulaw_clipped = mb_mulaw[:, start_mb_mulaw : end_mb_mulaw]
 
             return mb_mulaw_clipped, mel_clipped
         else:

@@ -103,7 +103,7 @@ class MelMulaw(Dataset):
 
         # Mel-spectrogram :: Tensor(T_mel, freq)
         mel: Tensor = load(self.get_path_mel(item_id))
-        # Multiband μ-law :: Tensor(T_mel * hop_length // n_band,)
+        # Multiband μ-law :: Tensor(Band, T_mel * hop_length // n_band,)
         mb_mulaw: Tensor = load(self.get_path_mulaw(item_id))
 
         if self._train:
@@ -120,7 +120,7 @@ class MelMulaw(Dataset):
             stride = self.conf.mel_stft_stride // self.conf.n_band
             start_mb_mulaw = stride * start_mel
             end_mb_mulaw = stride * end_mel + 1
-            # (T_mel * hop_length,) -> (clip_length_mel * hop_length,)
+            # (Band, T_mel * stride) -> (Band, clip_length_mel * stride)
             mb_mulaw_clipped = mb_mulaw[start_mb_mulaw : end_mb_mulaw]
 
             return mb_mulaw_clipped, mel_clipped

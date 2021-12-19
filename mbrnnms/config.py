@@ -1,3 +1,5 @@
+"""MB-RNNMS configurations"""
+
 from typing import Callable, TypeVar, Optional
 from dataclasses import dataclass
 

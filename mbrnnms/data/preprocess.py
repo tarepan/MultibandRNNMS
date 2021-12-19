@@ -167,18 +167,18 @@ def preprocess_mel_mb_mulaw(
     wave_bands_raw = pqmf.analysis(from_numpy(wave_length_fit).view(1,1,-1))
 
     # linear wave -> μ-law wave (length fit + μ-law conversion)
-    # (B=1, Band, T_sub) => (T_sub,) xBand => (B=1, Band, T_sub)
+    # (B=1, Band, T_sub) => (T_sub,) xBand => (Band, T_sub)
     mulaw_b1 = mu_compress(wave_bands_raw[0, 0].detach().numpy(), conf.bits_mulaw)
     mulaw_b2 = mu_compress(wave_bands_raw[0, 1].detach().numpy(), conf.bits_mulaw)
     mulaw_b3 = mu_compress(wave_bands_raw[0, 2].detach().numpy(), conf.bits_mulaw)
     mulaw_b4 = mu_compress(wave_bands_raw[0, 3].detach().numpy(), conf.bits_mulaw)
     wave_mb_mulaw = cat((
-            from_numpy(mulaw_b1).view(1, 1, -1),
-            from_numpy(mulaw_b2).view(1, 1, -1),
-            from_numpy(mulaw_b3).view(1, 1, -1),
-            from_numpy(mulaw_b4).view(1, 1, -1),
+            from_numpy(mulaw_b1).view(1, -1),
+            from_numpy(mulaw_b2).view(1, -1),
+            from_numpy(mulaw_b3).view(1, -1),
+            from_numpy(mulaw_b4).view(1, -1),
          ),
-         dim=1
+         dim=0
     )
     # save
     path_o_mel.parent.mkdir(parents=True, exist_ok=True)

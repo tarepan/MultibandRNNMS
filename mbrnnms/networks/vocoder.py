@@ -3,15 +3,14 @@
 
 from dataclasses import dataclass
 
-import torch
-from torch import Tensor
+from torch import Tensor, cat # pylint: disable=no-name-in-module
 import torch.nn as nn
 import torch.nn.functional as F
 from torchaudio.transforms import MuLawDecoding
 from omegaconf import MISSING
 
 from .prenet import RecurrentPreNet, ConfRecurrentPreNet
-from .decoder import CeARSubGenRNN, ConfC_eAR_GenRNN
+from .decoder import CeARSubGenRNN, ConfCeARGenRNN
 from .pqmf import PQMF
 
 @dataclass
@@ -32,7 +31,7 @@ class ConfRNNMSVocoder:
     prenet: ConfRecurrentPreNet = ConfRecurrentPreNet(
         dim_i="${..dim_i_feature}",
         dim_o="${..dim_voc_latent}")
-    wave_ar: ConfC_eAR_GenRNN = ConfC_eAR_GenRNN(
+    wave_ar: ConfCeARGenRNN = ConfCeARGenRNN(
         size_i_cnd="${..dim_voc_latent}",
         size_o_bit="${..bits_mu_law}")
 
@@ -105,7 +104,7 @@ class RNNMSVocoder(nn.Module):
         raw_b2: Tensor = self._mulaw_dec(subbands_mu_law[:, 1]).unsqueeze(1)
         raw_b3: Tensor = self._mulaw_dec(subbands_mu_law[:, 2]).unsqueeze(1)
         raw_b4: Tensor = self._mulaw_dec(subbands_mu_law[:, 3]).unsqueeze(1)
-        raw_bands = torch.cat((raw_b1, raw_b2, raw_b3, raw_b4), dim=1)
+        raw_bands = cat((raw_b1, raw_b2, raw_b3, raw_b4), dim=1)
 
         # Combine subbands :: (B=1, Band, T_sub) => (B=1, Band=1, T_wave) => (B=1, T_wave)
         fullband = self._pqmf.synthesis(raw_bands).view(1, -1)

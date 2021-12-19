@@ -7,7 +7,7 @@
 
 import numpy as np
 import torch
-from torch import Tensor
+from torch import Tensor, zeros, from_numpy # pylint: disable=no-name-in-module
 import torch.nn.functional as F
 
 from scipy.signal import kaiser
@@ -27,7 +27,8 @@ def design_prototype_filter(
         beta: Beta coefficient for kaiser window.
     Returns:
         Impluse response of prototype filter (taps + 1,).
-    .. _`A Kaiser window approach for the design of prototype filters of cosine modulated filterbanks`:
+    .. _`A Kaiser window approach for the design of
+            prototype filters of cosine modulated filterbanks`:
         https://ieeexplore.ieee.org/abstract/document/681427
     """
     # check the arguments are valid
@@ -43,10 +44,10 @@ def design_prototype_filter(
     h_i[taps // 2] = np.cos(0) * cutoff_ratio  # fix nan due to indeterminate form
 
     # apply kaiser window
-    w = kaiser(taps + 1, beta)
-    h = h_i * w
+    _w = kaiser(taps + 1, beta)
+    _h = h_i * _w
 
-    return h
+    return _h
 
 
 class PQMF(torch.nn.Module):
@@ -100,15 +101,15 @@ class PQMF(torch.nn.Module):
             )
 
         # convert to tensor
-        analysis_filter = torch.from_numpy(h_analysis).float().unsqueeze(1)
-        synthesis_filter = torch.from_numpy(h_synthesis).float().unsqueeze(0)
+        analysis_filter = from_numpy(h_analysis).float().unsqueeze(1)
+        synthesis_filter = from_numpy(h_synthesis).float().unsqueeze(0)
 
         # register coefficients as beffer
         self.register_buffer("analysis_filter", analysis_filter)
         self.register_buffer("synthesis_filter", synthesis_filter)
 
         # filter for downsampling & upsampling
-        updown_filter = torch.zeros((subbands, subbands, subbands)).float()
+        updown_filter = zeros((subbands, subbands, subbands)).float()
         for k in range(subbands):
             updown_filter[k, k, 0] = 1.0
         self.register_buffer("updown_filter", updown_filter)
@@ -117,15 +118,15 @@ class PQMF(torch.nn.Module):
         # keep padding info
         self.pad_fn = torch.nn.ConstantPad1d(taps // 2, 0.0)
 
-    def analysis(self, x: Tensor) -> Tensor:
+    def analysis(self, fullband: Tensor) -> Tensor:
         """Analysis with PQMF.
         Args:
             x (Batch, 1, T_full): Full-band signals
         Returns:
             (Batch, Band, T_sub): Sub-band signals, T_sub == T_full // subbands
         """
-        x = F.conv1d(self.pad_fn(x), self.analysis_filter)
-        return F.conv1d(x, self.updown_filter, stride=self.subbands)
+        subbands = F.conv1d(self.pad_fn(fullband), self.analysis_filter)
+        return F.conv1d(subbands, self.updown_filter, stride=self.subbands)
 
     def synthesis(self, i_subbands: Tensor) -> Tensor:
         """Synthesis with PQMF.

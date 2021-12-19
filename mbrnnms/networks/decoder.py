@@ -4,7 +4,7 @@
 from dataclasses import dataclass
 
 import torch
-from torch import Tensor
+from torch import Tensor, tensor, long, zeros, cat, unbind # pylint: disable=no-name-in-module
 import torch.nn as nn
 import torch.nn.functional as F
 from omegaconf import MISSING
@@ -23,7 +23,7 @@ def get_gru_cell(gru):
 
 
 @dataclass
-class ConfC_eAR_GenRNN:
+class ConfCeARGenRNN:
     """Configuration of C_eAR_GenRNN.
     Args:
         size_i_cnd: size of conditioning input vector
@@ -45,7 +45,7 @@ class CeARSubGenRNN(nn.Module):
       --> FC2 xBand -> output Energy vector -> (softmax) -> (sampling) -> sample_bN_t
     """
 
-    def __init__(self, conf: ConfC_eAR_GenRNN) -> None:
+    def __init__(self, conf: ConfCeARGenRNN) -> None:
         super().__init__()
 
         self._n_band = 4
@@ -78,7 +78,7 @@ class CeARSubGenRNN(nn.Module):
         This is for training, so there is no sampling.
 
         Args:
-            reference_sample (Batch, Band, Time): Reference sample (index) series for teacher-forcing
+            reference_sample (Batch, Band, Time): Sample (index) series for teacher-forcing
             i_cnd_series (Batch, Time, dim_latent): conditional input vector series
 
         Returns:
@@ -91,10 +91,10 @@ class CeARSubGenRNN(nn.Module):
         ref_emb_b3 = self.embedding_b3(reference_sample[:, 2])
         ref_emb_b4 = self.embedding_b4(reference_sample[:, 3])
         # Concat embeddings: (B, T, Emb) xBand => (B, T, Band*Emb)
-        ref_emb_series = torch.cat((ref_emb_b1, ref_emb_b2, ref_emb_b3, ref_emb_b4), dim=-1)
+        ref_emb_series = cat((ref_emb_b1, ref_emb_b2, ref_emb_b3, ref_emb_b4), dim=-1)
 
         # Concat RNN inputs: (B, T, Band*Emb) + (B, T, Feat) => (B, T, Band*Emb+Feat)
-        i_ar = torch.cat((ref_emb_series, i_cnd_series), dim=-1)
+        i_ar = cat((ref_emb_series, i_cnd_series), dim=-1)
         # (B, T, Band*Emb+Feat) => (B, T, h_rnn)
         o_rnn, _ = self.rnn(i_ar)
 
@@ -106,7 +106,7 @@ class CeARSubGenRNN(nn.Module):
         o_b3 = self.fc2_b3(o_fc1).unsqueeze(1)
         o_b4 = self.fc2_b4(o_fc1).unsqueeze(1)
         # (B, 1, T, Energy) xBand => (B, Band, T, Energy)
-        o_bands = torch.cat((o_b1, o_b2, o_b3, o_b4), 1)
+        o_bands = cat((o_b1, o_b2, o_b3, o_b4), 1)
         return o_bands
 
     def generate(self, i_cnd_series: Tensor) -> Tensor:
@@ -121,19 +121,19 @@ class CeARSubGenRNN(nn.Module):
 
         batch_size = i_cnd_series.size(0)
         # ::(B, Band, T) (initialized as (B, Band, 0])
-        sample_series = torch.tensor(
+        sample_series = tensor(
             [[[] for _ in range(0, self._n_band)] for _ in range(batch_size)],
             device=i_cnd_series.device
         )
         cell = get_gru_cell(self.rnn)
         # initialization
-        h_rnn_t_minus_1 = torch.zeros(batch_size, self.size_h_rnn, device=i_cnd_series.device)
+        h_rnn_t_minus_1 = zeros(batch_size, self.size_h_rnn, device=i_cnd_series.device)
         # [Batch]
         # nn.Embedding needs LongTensor input
-        sample_b1_t_minus_1 = torch.zeros(batch_size, device=i_cnd_series.device, dtype=torch.long)
-        sample_b2_t_minus_1 = torch.zeros(batch_size, device=i_cnd_series.device, dtype=torch.long)
-        sample_b3_t_minus_1 = torch.zeros(batch_size, device=i_cnd_series.device, dtype=torch.long)
-        sample_b4_t_minus_1 = torch.zeros(batch_size, device=i_cnd_series.device, dtype=torch.long)
+        sample_b1_t_minus_1 = zeros(batch_size, device=i_cnd_series.device, dtype=long)
+        sample_b2_t_minus_1 = zeros(batch_size, device=i_cnd_series.device, dtype=long)
+        sample_b3_t_minus_1 = zeros(batch_size, device=i_cnd_series.device, dtype=long)
+        sample_b4_t_minus_1 = zeros(batch_size, device=i_cnd_series.device, dtype=long)
         # ※ μ-law specific part
         # In μ-law representation, center == volume 0, so self.size_out // 2 equal to zero volume
         sample_b1_t_minus_1 = sample_b1_t_minus_1.fill_(self.size_out // 2)
@@ -144,7 +144,7 @@ class CeARSubGenRNN(nn.Module):
         # Auto-regiressive sample series generation
         # separate speech-conditioning according to Time
         # [Batch, T_mel, freq] => [Batch, freq]
-        conditionings = torch.unbind(i_cnd_series, dim=1)
+        conditionings = unbind(i_cnd_series, dim=1)
 
         for i_cond_t in conditionings:
             # (B,) xBand => (B, Emb) xBand => (B, Band*Emb)
@@ -152,9 +152,9 @@ class CeARSubGenRNN(nn.Module):
             ar_2_t = self.embedding_b2(sample_b2_t_minus_1)
             ar_3_t = self.embedding_b3(sample_b3_t_minus_1)
             ar_4_t = self.embedding_b4(sample_b4_t_minus_1)
-            i_emb_t = torch.cat((ar_1_t, ar_2_t, ar_3_t, ar_4_t), dim=-1)
+            i_emb_t = cat((ar_1_t, ar_2_t, ar_3_t, ar_4_t), dim=-1)
             # (B, Band*Emb) + (B, Latent) => (B, h_rnn)
-            h_rnn_t = cell(torch.cat((i_emb_t, i_cond_t), dim=-1), h_rnn_t_minus_1)
+            h_rnn_t = cell(cat((i_emb_t, i_cond_t), dim=-1), h_rnn_t_minus_1)
             # (B, h_rnn) => (B, h_fc) => (B, Prob) xBand
             h_fc_t = self.fc1(h_rnn_t)
             posterior_b1_t = F.softmax(self.fc2_b1(h_fc_t), dim=-1)
@@ -171,9 +171,9 @@ class CeARSubGenRNN(nn.Module):
             sample_b2_t: Tensor = dist_b2_t.sample().unsqueeze(1)
             sample_b3_t: Tensor = dist_b3_t.sample().unsqueeze(1)
             sample_b4_t: Tensor = dist_b4_t.sample().unsqueeze(1)
-            sample_t = torch.cat((sample_b1_t, sample_b2_t, sample_b3_t, sample_b4_t), dim=1)
+            sample_t = cat((sample_b1_t, sample_b2_t, sample_b3_t, sample_b4_t), dim=1)
             # Reshape: (B, Band) => (Batch, Band, T=1) for cancat w/ (B, Band, T)
-            sample_series = torch.cat((sample_series, sample_t.unsqueeze(-1)), dim=-1)
+            sample_series = cat((sample_series, sample_t.unsqueeze(-1)), dim=-1)
             # t => t-1 :: (B, 1) => (B)
             sample_b1_t_minus_1 = sample_b1_t.squeeze(-1)
             sample_b2_t_minus_1 = sample_b2_t.squeeze(-1)

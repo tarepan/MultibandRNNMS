@@ -10,7 +10,7 @@ import pytorch_lightning as pl
 from pytorch_lightning.core.datamodule import LightningDataModule
 from omegaconf import MISSING
 
-from .model import RNN_MS, ConfRNN_MS
+from .model import MbRNNMS, ConfMbRNNMS
 from .report import ConfCkptLog, generate_state_components
 
 
@@ -39,7 +39,7 @@ class ConfTrain:
     """
     ckpt_log: ConfCkptLog = ConfCkptLog()
     trainer: ConfTrainer = ConfTrainer()
-    model: ConfRNN_MS = ConfRNN_MS()
+    model: ConfMbRNNMS = ConfMbRNNMS()
 
 
 def train(conf: ConfTrain, datamodule: LightningDataModule) -> None:
@@ -49,7 +49,7 @@ def train(conf: ConfTrain, datamodule: LightningDataModule) -> None:
     callbacks = []
 
     # setup
-    model = RNN_MS(conf.model)
+    model = MbRNNMS(conf.model)
 
     # Resume and Reporting
     state_components, state_clbks = generate_state_components(conf.ckpt_log)

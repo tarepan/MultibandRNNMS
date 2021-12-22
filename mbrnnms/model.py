@@ -27,14 +27,14 @@ class ConfOptim:
     sched_decay_step: int = MISSING
 
 @dataclass
-class ConfRNN_MS:
+class ConfMbRNNMS:
     """Configuration of RNN_MS.
     """
     sampling_rate: int = MISSING  # Audio sampling rate
     vocoder: ConfRNNMSVocoder = ConfRNNMSVocoder()
     optim: ConfOptim = ConfOptim()
 
-class RNN_MS(pl.LightningModule):
+class MbRNNMS(pl.LightningModule):
     """RNN_MS, universal neural vocoder.
     """
 

@@ -4,7 +4,7 @@
 from typing import Tuple
 from dataclasses import dataclass
 
-from torch import Tensor
+from torch import Tensor, rand
 import torch.nn.functional as F
 from torch.optim import Adam
 from torch.optim.lr_scheduler import StepLR
@@ -54,6 +54,15 @@ class MbRNNMS(pl.LightningModule):
             Tensor(1, Time') - a waveform
         """
         return self.rnnms.generate(cond_series)
+
+    def generate_fake_input(self) -> Tensor:
+        """Generate fake inputs of 1frame-to-wave `forward`
+
+        Intended to be used for ONNX export.
+        Returns:
+            (Batch=1, T_cond=1, Feature) - condtioning series
+        """
+        return rand((1, 1, self.conf.vocoder.dim_i_feature))
 
     def training_step(self, batch: Tuple[Tensor, Tensor], batch_idx: int):
         """Supervised learning.

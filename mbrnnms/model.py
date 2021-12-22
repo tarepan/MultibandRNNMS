@@ -38,14 +38,22 @@ class MbRNNMS(pl.LightningModule):
     """RNN_MS, universal neural vocoder.
     """
 
-    def __init__(self, conf: ConfRNN_MS):
+    def __init__(self, conf: ConfMbRNNMS):
         super().__init__()
         self.save_hyperparameters()
         self.conf = conf
         self.rnnms = RNNMSVocoder(conf.vocoder)
 
-    def forward(self, _: Tensor, mels: Tensor):
-        return self.rnnms.generate(mels)
+    def forward(self, cond_series: Tensor) -> Tensor:
+        """Generate a waveform from conditioning series.
+
+        Intended to be used for ONNX export.
+        Args:
+            cond_series (Batch=1, Time, Feature) - conditioning series
+        Returns:
+            Tensor(1, Time') - a waveform
+        """
+        return self.rnnms.generate(cond_series)
 
     def training_step(self, batch: Tuple[Tensor, Tensor], batch_idx: int):
         """Supervised learning.

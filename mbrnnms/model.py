@@ -55,7 +55,7 @@ class MbRNNMS(pl.LightningModule):
         """
         return self.rnnms.generate(cond_series)
 
-    def generate_fake_input(self) -> Tensor:
+    def generate_fake_inputs(self) -> Tensor:
         """Generate fake inputs of 1frame-to-wave `forward`
 
         Intended to be used for ONNX export.
